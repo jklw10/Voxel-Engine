@@ -8,8 +8,10 @@ using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 
+using Voxel_Engine.Utility;
+using Voxel_Engine.DataHandling;
 
-namespace Voxel_Engine
+namespace Voxel_Engine.Rendering
 {
     /*
     class Camera
@@ -55,7 +57,7 @@ namespace Voxel_Engine
             set
             {
                 screenSize = value;
-                GL.ProgramUniform2(VisualShaderID, GL.GetUniformLocation(VisualShaderID, "Resolution"), ref screenSize);
+                GL.ProgramUniform2(ProgramID, GL.GetUniformLocation(ProgramID, "Resolution"), ref screenSize);
                 OnFOVResChange();
             }
         }
@@ -69,7 +71,7 @@ namespace Voxel_Engine
             set 
             {
                 displayPos = value;
-                GL.ProgramUniform2(VisualShaderID, GL.GetUniformLocation(VisualShaderID, "ScreenPos"), ref displayPos);
+                GL.ProgramUniform2(ProgramID, GL.GetUniformLocation(ProgramID, "ScreenPos"), ref displayPos);
             } 
         }
         private Vector2 displayPos;
@@ -78,7 +80,7 @@ namespace Voxel_Engine
 
         public float FOV = (float)Math.PI / 3;
 
-        private static int VisualShaderID;
+        private static int ProgramID;
 
         private static int cubeVAO; //cube vertex data
 #pragma warning disable CS8618 //fukn brok
@@ -86,10 +88,13 @@ namespace Voxel_Engine
 #pragma warning restore CS8618
         public Camera(Vector2 screenSize, Vector2? displayPos = null)
         {
+            Initialize();
+
             ScreenSize = screenSize;
             DisplayPos = displayPos ?? new Vector2(0, 0);
             CameraLookAt = new Vector3(1, 0, 0);
-            Initialize();
+            OnCameraMove();
+            OnFOVResChange();
             _ = indices ?? throw new ApplicationException("Voxel object mesh index creation failed");
         }
 
@@ -103,7 +108,7 @@ namespace Voxel_Engine
         {
             //*campos offsets into a direction specified by "cameraAngle" by "Zoom" ammount
             ViewMatrix = Matrix4.LookAt(CameraPosition, CameraPosition+CameraLookAt, Vector3.UnitZ);
-            GL.ProgramUniformMatrix4(VisualShaderID, GL.GetUniformLocation(VisualShaderID, "ViewMatrix"), true, ref ViewMatrix);
+            GL.ProgramUniformMatrix4(ProgramID, GL.GetUniformLocation(ProgramID, "ViewMatrix"), true, ref ViewMatrix);
         }
 
         /// <summary>
@@ -112,7 +117,7 @@ namespace Voxel_Engine
         public void OnFOVResChange()
         {
             ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI - FOV, (float)(screenSize.X / screenSize.Y), 0.1f, 1000);
-            GL.ProgramUniformMatrix4(VisualShaderID, GL.GetUniformLocation(VisualShaderID, "ProjMatrix"), true, ref ProjectionMatrix);
+            GL.ProgramUniformMatrix4(ProgramID, GL.GetUniformLocation(ProgramID, "ProjMatrix"), true, ref ProjectionMatrix);
 
         }
 
@@ -121,31 +126,18 @@ namespace Voxel_Engine
         /// </summary>
         public void RenderCamera(bool clear)
         {
-            if(world == null)
-            {
-                throw new ApplicationException("A world was not set for the camera to render.");
-            }
-            if (clear)
-            {
-                GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            }
-            if(subCamera is object)
-            {
-                subCamera.RenderCamera(false);
-            }
 
-            //GL.Enable(EnableCap.Texture2D);
-            //GL.Enable(EnableCap.IndexArray);
-            //GL.Enable(EnableCap.CullFace);
-            //GL.Enable(EnableCap.Fog);
-           
-
-            //GL.ActiveTexture(TextureUnit.Texture0);
-            //GL.BindTexture(TextureTarget.Texture2D, Texture);
-
-            GL.BindVertexArray(cubeVAO);
+            if (world       is null)    throw new ApplicationException("A world was not set for the camera to render.");
             
-            GL.DrawElementsInstanced(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, indices,world.DrawnVoxelCount);
+            if (subCamera   is object)  subCamera.RenderCamera(false); //don't clear when rendering a sub camera
+            
+
+            if (clear) GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            
+            GL.BindVertexArray(cubeVAO);
+            GL.UseProgram(ProgramID);
+
+            GL.DrawElementsInstanced(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, (IntPtr)0, 1);
             GL.BindVertexArray(0);
         }
         public static void Initialize()
@@ -158,9 +150,9 @@ namespace Voxel_Engine
             int VS = Shaders.LoadResource("vertex_shader", ShaderType.VertexShader);
             int FS = Shaders.LoadResource("fragment_shader", ShaderType.FragmentShader);
 
-            VisualShaderID = Shaders.CreateVisuals(VS, FS);
+            ProgramID = Shaders.CreateProgram(VS, FS);
 
-            GL.UseProgram(VisualShaderID);
+            GL.UseProgram(ProgramID);
         }
 
 
@@ -172,7 +164,7 @@ namespace Voxel_Engine
             List<float> positions = new List<float>();
 
 
-            GL.ProgramUniform1(VisualShaderID, GL.GetUniformLocation(VisualShaderID, "scale"), toLoad.VoxelSize);
+            GL.ProgramUniform1(ProgramID, GL.GetUniformLocation(ProgramID, "Scale"), toLoad.VoxelSize);
 
 
             foreach (Chunk c in toLoad.ToDraw)

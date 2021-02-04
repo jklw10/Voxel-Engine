@@ -8,7 +8,7 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 using OpenTK.Windowing.Common;
 
-namespace Voxel_Engine
+namespace Voxel_Engine.Utility
 {
 	public static class Input
 	{

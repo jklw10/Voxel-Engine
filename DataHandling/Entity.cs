@@ -5,7 +5,7 @@ using System.Linq;
 
 
 
-namespace Voxel_Engine
+namespace Voxel_Engine.DataHandling
 {
     public class Entity : IComponent
     {

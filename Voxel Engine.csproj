@@ -13,10 +13,18 @@
 
 
 
+
   <ItemGroup>
     <PackageReference Include="ImGui.NET" Version="1.78.0" />
     <PackageReference Include="OpenTK" Version="4.3.0" />
     <PackageReference Include="System.Drawing.Common" Version="5.0.0" />
+  </ItemGroup>
+
+
+
+  <ItemGroup>
+    <Resource Update="Content\Base.frag" />
+    <Resource Update="Content\Base.vert" />
   </ItemGroup>
 
 

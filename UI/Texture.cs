@@ -11,7 +11,7 @@ using OpenTK.Graphics.OpenGL4;
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 
-namespace Voxel_Engine
+namespace Voxel_Engine.GUI
 {
     public enum TextureCoordinate
     {

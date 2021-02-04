@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using OpenTK.Graphics.OpenGL4;
 
-namespace Voxel_Engine
+namespace Voxel_Engine.GUI
 {
     struct UniformFieldInfo
     {

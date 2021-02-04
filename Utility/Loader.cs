@@ -5,7 +5,7 @@ using OpenTK.Graphics.OpenGL4;
 using System.IO;
 using System.Resources;
 
-namespace Voxel_Engine
+namespace Voxel_Engine.Utility
 {
     class Shaders
     {
@@ -41,9 +41,8 @@ namespace Voxel_Engine
             {
                 throw new ApplicationException("reading from resources failed. path:" + path);
             }
-            string Text = Encoding.UTF8.GetString(obj) + "\n ";
+            string Text = Encoding.UTF8.GetString(obj[3..]) + "\n ";
             
-
             int ID = GL.CreateShader(type);
             GL.ShaderSource(ID, Text);
             GL.CompileShader(ID);
@@ -55,22 +54,32 @@ namespace Voxel_Engine
             {
 #if DEBUG
                 throw new Exception($"brok :( {GL.GetShaderInfoLog(ID)}");
-#else
-                
 #endif
             }
             return ID;
         }
-        public static int CreateVisuals(params int[] Shaders)
+        public static int CreateProgram(params int[] Shaders)
         {
-            int ID = GL.CreateProgram();
+            int Program = GL.CreateProgram();
             foreach (var Unit in Shaders)
             {
-                GL.AttachShader(ID, Unit);
+                GL.AttachShader(Program, Unit);
             }
-            GL.LinkProgram(ID);
+            GL.LinkProgram(Program);
 
-            return ID;
+            GL.GetProgram(Program, GetProgramParameterName.LinkStatus, out int Success);
+            if (Success == 0)
+            {
+                string Info = GL.GetProgramInfoLog(Program);
+                Console.WriteLine($"GL.LinkProgram had info log :\n{Info}");
+            }
+            //detach and delete shaders  because they're not used after program creation
+            foreach (var Unit in Shaders)
+            {
+                GL.DetachShader(Program, Unit);
+                GL.DeleteShader(Unit);
+            }
+            return Program;
         }
     }
 }

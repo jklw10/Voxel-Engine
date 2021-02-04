@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Text;
 using OpenTK.Mathematics;
+using OpenTK.Graphics.OpenGL4;
+using System.Diagnostics;
 
-namespace Voxel_Engine
+namespace Voxel_Engine.Utility
 {
     static class Extensions
     {
@@ -44,5 +47,40 @@ namespace Voxel_Engine
             Vector3i.UnitZ,
             -Vector3i.UnitZ,
         };
+    }
+}
+
+namespace Voxel_Engine.Utility.Debug
+{
+    class DebugTools
+    {
+        private static DebugProc _debugProcCallback = DebugCallback;
+        private static GCHandle _debugProcCallbackHandle;
+        private static void DebugCallback(DebugSource source,
+                                  DebugType type,
+                                  int id,
+                                  DebugSeverity severity,
+                                  int length,
+                                  IntPtr message,
+                                  IntPtr userParam)
+        {
+            string messageString = Marshal.PtrToStringAnsi(message, length);
+
+            Console.WriteLine($"{severity} {type} | {messageString}");
+
+            if (type == DebugType.DebugTypeError)
+            {
+                throw new Exception(messageString);
+            }
+        }
+
+        [Conditional("DEBUG")]
+        public static void Enable(){
+            _debugProcCallbackHandle = GCHandle.Alloc(_debugProcCallback);
+
+            GL.DebugMessageCallback(_debugProcCallback, IntPtr.Zero);
+            GL.Enable(EnableCap.DebugOutput);
+            GL.Enable(EnableCap.DebugOutputSynchronous);
+        }
     }
 }

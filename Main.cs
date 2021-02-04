@@ -12,6 +12,10 @@ using OpenTK.Windowing.Common;
 
 using ImGuiNET;
 
+using Voxel_Engine.Utility;
+using Voxel_Engine.GUI;
+using Voxel_Engine.Rendering;
+
 namespace Voxel_Engine
 {
     public class Engine
@@ -22,26 +26,29 @@ namespace Voxel_Engine
         };
         public static void CreateWindow()
         {
-            window.UpdateFrame += OnUpdate;
-            window.RenderFrame += OnRender;
-            window.Load += OnLoad;
-
+            window.UpdateFrame  += OnUpdate;
+            window.RenderFrame  += OnRender;
+            window.Load         += OnLoad;
+            window.Resize       += OnResize;
 
             window.Run();
             window.Dispose();
         }
 
+        private static void OnResize(ResizeEventArgs obj)
+        {
+            window.Size = obj.Size;
+        }
 
         private static void OnUpdate(FrameEventArgs e)
         {
             Input.Update();
         }
+        static bool asd = true;
         private static void OnRender(FrameEventArgs e)
         {
 
-            GL.ClearColor(new Color4(0, 32, 48, 255));
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
-
+            
             if (Camera.Main is object)
             {
                 Camera.Main.RenderCamera(true);
@@ -53,20 +60,25 @@ namespace Voxel_Engine
             try
             {
                 window.SwapBuffers();
-                GL.Flush();
+                
             }
             catch(Exception ex)
             {
                 Console.WriteLine(ex);
             }
+            if (asd)
+            {
+                asd = false;
+            }
         }
         private static void OnLoad()
         {
+            Utility.Debug.DebugTools.Enable();
+
             UI.Init(window);
             Input.Initialize(window);
-
-
-            GL.ClearColor(Color.DarkGray);
+            GL.ClearColor(new Color4(0, 32, 48, 255));
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
         }
     }
 }

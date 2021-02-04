@@ -1,6 +1,9 @@
 ﻿using System;
 using OpenTK.Mathematics;
-namespace Voxel_Engine
+
+using Voxel_Engine.DataHandling;
+
+namespace Voxel_Engine.Rendering
 {
     public class Voxel : IComponent
     {
@@ -10,7 +13,7 @@ namespace Voxel_Engine
         public Voxel(Color4 color, Vector3 pos)
         {
             Color = color;
-            Transform = new Transform(pos, new Quaternion(), new Vector3(1, 1, 1));
+            Transform = new Transform(pos, Quaternion.Identity, new Vector3(1, 1, 1));
         }
     }
 }

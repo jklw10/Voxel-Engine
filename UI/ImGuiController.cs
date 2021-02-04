@@ -8,7 +8,7 @@ using OpenTK.Windowing.Common.Input;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 
-namespace Voxel_Engine
+namespace Voxel_Engine.GUI
 {
     /// <summary>
     /// A modified version of Veldrid.ImGui's ImGuiRenderer.

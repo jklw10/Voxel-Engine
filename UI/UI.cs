@@ -10,7 +10,7 @@ using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
 
-namespace Voxel_Engine
+namespace Voxel_Engine.GUI
 {
     public static class UI
     {

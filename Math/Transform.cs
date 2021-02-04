@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 using OpenTK.Mathematics;
 
+using Voxel_Engine.DataHandling;
+
 namespace Voxel_Engine
 {
     public class Transform : IComponent

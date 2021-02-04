@@ -5,14 +5,12 @@ layout(location = 1) in vec4 ColorIn;
 layout(location = 2) in vec4 Rotation;
 layout(location = 3) in vec3 Translation;
 
-uniform vec3 Scale;
+uniform float Scale;
 
-uniform bool CullingIn;
 
 uniform mat4 ViewMatrix;
 uniform mat4 ProjMatrix;
 
-out vec2 UVtrans;
 out vec4 Color;
 
 vec3 Rotate(vec3 v, vec4 q)
@@ -29,14 +27,12 @@ vec3 Rotate(vec3 v, vec4 q)
           + (s*s - dot(u, u)) * v
           + 2.0f * s * cross(u, v);
 
-  
     return vPrime;
 }
 
 void main()
 {
-	gl_Position = /**/ vec4(Translation+Rotate(Vertex * Scale, Rotation),1.0) *ViewMatrix *ProjMatrix;
-	//UVtrans = UV;
+	gl_Position =  vec4(Translation+Rotate(Vertex * Scale, Rotation),1.0) *ViewMatrix *ProjMatrix;
 	Color = ColorIn;
 }
 
