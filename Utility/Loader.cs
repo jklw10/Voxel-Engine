@@ -41,6 +41,7 @@ namespace Voxel_Engine.Utility
             {
                 throw new ApplicationException("reading from resources failed. path:" + path);
             }
+            //delete BOF and add a newline to the end to avoid the EOF
             string Text = Encoding.UTF8.GetString(obj[3..]) + "\n ";
             
             int ID = GL.CreateShader(type);

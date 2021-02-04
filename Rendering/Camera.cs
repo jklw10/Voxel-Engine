@@ -35,7 +35,7 @@ namespace Voxel_Engine.Rendering
             set 
             {
                 cameraPosition = value;
-                OnCameraMove();
+                UpdateViewMatrix();
             } 
         }
         public Vector3 CameraLookAt 
@@ -44,7 +44,7 @@ namespace Voxel_Engine.Rendering
             set 
             { 
                 cameraLookAt = value;
-                OnCameraMove();
+                UpdateViewMatrix();
             }
         }
 
@@ -58,10 +58,13 @@ namespace Voxel_Engine.Rendering
             {
                 screenSize = value;
                 GL.ProgramUniform2(ProgramID, GL.GetUniformLocation(ProgramID, "Resolution"), ref screenSize);
-                OnFOVResChange();
+                UpdateProjectionMatrix();
             }
         }
-
+        public void FitToScreen()
+        {
+            ScreenSize = Engine.window.Size;
+        }
 
         private Vector2 screenSize;
 
@@ -93,8 +96,8 @@ namespace Voxel_Engine.Rendering
             ScreenSize = screenSize;
             DisplayPos = displayPos ?? new Vector2(0, 0);
             CameraLookAt = new Vector3(1, 0, 0);
-            OnCameraMove();
-            OnFOVResChange();
+            UpdateViewMatrix();
+            UpdateProjectionMatrix();
             _ = indices ?? throw new ApplicationException("Voxel object mesh index creation failed");
         }
 
@@ -104,9 +107,9 @@ namespace Voxel_Engine.Rendering
         /// <summary>
         /// call when camera is moved for it to take effect.
         /// </summary>
-        public void OnCameraMove()
+        public void UpdateViewMatrix()
         {
-            //*campos offsets into a direction specified by "cameraAngle" by "Zoom" ammount
+            GL.UseProgram(ProgramID);
             ViewMatrix = Matrix4.LookAt(CameraPosition, CameraPosition+CameraLookAt, Vector3.UnitZ);
             GL.ProgramUniformMatrix4(ProgramID, GL.GetUniformLocation(ProgramID, "ViewMatrix"), true, ref ViewMatrix);
         }
@@ -114,8 +117,9 @@ namespace Voxel_Engine.Rendering
         /// <summary>
         /// call when fov or resolution is changed for it to take effect.
         /// </summary>
-        public void OnFOVResChange()
+        public void UpdateProjectionMatrix()
         {
+            GL.UseProgram(ProgramID);
             ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI - FOV, (float)(screenSize.X / screenSize.Y), 0.1f, 1000);
             GL.ProgramUniformMatrix4(ProgramID, GL.GetUniformLocation(ProgramID, "ProjMatrix"), true, ref ProjectionMatrix);
 
@@ -158,7 +162,8 @@ namespace Voxel_Engine.Rendering
 
         public void LoadWorld(World toLoad)
         {
-            world = toLoad;
+
+            GL.UseProgram(ProgramID);
             List<float> colors = new List<float>();
             List<float> rotations = new List<float>();
             List<float> positions = new List<float>();

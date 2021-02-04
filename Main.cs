@@ -38,6 +38,7 @@ namespace Voxel_Engine
         private static void OnResize(ResizeEventArgs obj)
         {
             window.Size = obj.Size;
+            Camera.Main?.FitToScreen();
         }
 
         private static void OnUpdate(FrameEventArgs e)
