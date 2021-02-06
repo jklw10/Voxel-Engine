@@ -108,12 +108,13 @@ namespace Voxel_Engine.DataHandling
                 }
                 return true;
             }
-            catch(Exception e)
+            catch
             {
+                Console.WriteLine("Entity destruction failed severely");
 #if !DEBUG
                 return false;
 #else
-                throw e;
+                throw;
 #endif
             }
         }

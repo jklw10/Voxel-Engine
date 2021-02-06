@@ -65,5 +65,14 @@ namespace Voxel_Engine.GUI
         {
             controller?.MouseScroll(e.Offset);
         }
+        public static void Style()
+        {
+            ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0);
+            ImGui.PushStyleVar(ImGuiStyleVar.ScrollbarRounding, 0);
+            ImGui.PushStyleVar(ImGuiStyleVar.TabRounding, 0);
+            ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0);
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0);
+            ImGui.PushStyleVar(ImGuiStyleVar.TabRounding, 0);
+        }
     }
 }

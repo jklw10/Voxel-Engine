@@ -76,8 +76,11 @@ namespace Voxel_Engine.DataHandling
         /// <returns></returns>
         public (Vector3i CC, Vector3i CR) Chunkify(Vector3i pos)
         {
-            Vector3i CC = new Vector3i(pos.X / Chunk.Size, pos.Y / Chunk.Size, pos.Z / Chunk.Size);        //chunk in map coordinate
-            Vector3i CR = new Vector3i(pos.X, pos.Y, pos.Z).Modulo(new Vector3i(Chunk.Size, Chunk.Size, Chunk.Size));      //chunk  relative to itself coordinate
+            //TODO: bitshift and bitmanipulate to get faster?
+            //chunk in map coordinate
+            Vector3i CC = new Vector3i(pos.X / Chunk.Size, pos.Y / Chunk.Size, pos.Z / Chunk.Size);        
+            //chunk  relative to itself coordinate
+            Vector3i CR = new Vector3i(pos.X-1, pos.Y-1, pos.Z-1).Modulo(new Vector3i(Chunk.Size, Chunk.Size, Chunk.Size));      
             return (CC, CR);
 
         }

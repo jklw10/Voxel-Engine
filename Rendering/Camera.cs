@@ -8,18 +8,12 @@ using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 
+
 using Voxel_Engine.Utility;
 using Voxel_Engine.DataHandling;
 
 namespace Voxel_Engine.Rendering
 {
-    /*
-    class Camera
-    {
-        Vector3 cameraAngle;
-        Vector3 cameraLookAt;
-    }//*/
-     //*
     public class Camera
     {
         public static Camera? Main;
@@ -29,27 +23,7 @@ namespace Voxel_Engine.Rendering
         }
 
         public Camera? subCamera;
-        public Vector3 CameraPosition 
-        { 
-            get => cameraPosition; 
-            set 
-            {
-                cameraPosition = value;
-                UpdateViewMatrix();
-            } 
-        }
-        public Vector3 CameraLookAt 
-        { 
-            get => cameraLookAt; 
-            set 
-            { 
-                cameraLookAt = value;
-                UpdateViewMatrix();
-            }
-        }
-
-        private Vector3 cameraPosition;
-        private Vector3 cameraLookAt;
+        
 
         public Vector2 ScreenSize
         {
@@ -61,13 +35,6 @@ namespace Voxel_Engine.Rendering
                 UpdateProjectionMatrix();
             }
         }
-        public void FitToScreen()
-        {
-            ScreenSize = Engine.window.Size;
-        }
-
-        private Vector2 screenSize;
-
         public Vector2 DisplayPos 
         { 
             get => displayPos; 
@@ -77,25 +44,44 @@ namespace Voxel_Engine.Rendering
                 GL.ProgramUniform2(ProgramID, GL.GetUniformLocation(ProgramID, "ScreenPos"), ref displayPos);
             } 
         }
-        private Vector2 displayPos;
+        public Transform Transform 
+        {
+            get => transform;
+            set
+            {
+                transform = value;
+                UpdateViewMatrix();
+            }
+        }
 
-        World? world = World.Current;
+
+#nullable disable
+        private Transform transform;
+        private Vector2 screenSize;
+        private Vector2 displayPos;
+        private static uint[] indices; //what order to use vertices in.
+#nullable enable
+
+        public void FitToScreen()
+        {
+            ScreenSize = Engine.window.Size;
+        }
+
 
         public float FOV = (float)Math.PI / 3;
 
         private static int ProgramID;
 
         private static int cubeVAO; //cube vertex data
-#pragma warning disable CS8618 //fukn brok
-        private static uint[] indices; //what order to use vertices in.
-#pragma warning restore CS8618
-        public Camera(Vector2 screenSize, Vector2? displayPos = null)
+        public Camera(Vector2 screenSize, Vector2? displayPos = null, Transform? transform = null)
         {
             Initialize();
 
             ScreenSize = screenSize;
             DisplayPos = displayPos ?? new Vector2(0, 0);
-            CameraLookAt = new Vector3(1, 0, 0);
+
+            Transform = transform ?? new Transform(Vector3.Zero);
+
             UpdateViewMatrix();
             UpdateProjectionMatrix();
             _ = indices ?? throw new ApplicationException("Voxel object mesh index creation failed");
@@ -110,8 +96,9 @@ namespace Voxel_Engine.Rendering
         public void UpdateViewMatrix()
         {
             GL.UseProgram(ProgramID);
-            ViewMatrix = Matrix4.LookAt(CameraPosition, CameraPosition+CameraLookAt, Vector3.UnitZ);
+            ViewMatrix = Transform.TransformMatrix.Inverted();
             GL.ProgramUniformMatrix4(ProgramID, GL.GetUniformLocation(ProgramID, "ViewMatrix"), true, ref ViewMatrix);
+            transform.Dirty = false;
         }
 
         /// <summary>
@@ -129,15 +116,14 @@ namespace Voxel_Engine.Rendering
         /// updates the transformation matrices to reflect the new camera rotation/position
         /// </summary>
         public void RenderCamera(bool clear)
-        {
+        {            
 
-            if (world       is null)    throw new ApplicationException("A world was not set for the camera to render.");
-            
             if (subCamera   is object)  subCamera.RenderCamera(false); //don't clear when rendering a sub camera
-            
 
             if (clear) GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            
+
+            if (transform.Dirty) UpdateViewMatrix();
+
             GL.BindVertexArray(cubeVAO);
             GL.UseProgram(ProgramID);
 
@@ -160,17 +146,18 @@ namespace Voxel_Engine.Rendering
         }
 
 
-        public void LoadWorld(World toLoad)
+        public static void LoadWorld(World toLoad)
         {
-
             GL.UseProgram(ProgramID);
+            GL.BindVertexArray(cubeVAO);
+
             List<float> colors = new List<float>();
             List<float> rotations = new List<float>();
             List<float> positions = new List<float>();
 
 
             GL.ProgramUniform1(ProgramID, GL.GetUniformLocation(ProgramID, "Scale"), toLoad.VoxelSize);
-
+            
 
             foreach (Chunk c in toLoad.ToDraw)
             {

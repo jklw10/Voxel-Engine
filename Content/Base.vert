@@ -15,19 +15,14 @@ out vec4 Color;
 
 vec3 Rotate(vec3 v, vec4 q)
 { 
-    vec3 vPrime;
-    // Extract the vector part of the quaternion
+    // separate the vector and scalar part of the quaternion
     vec3 u = q.xyz;
-
-    // Extract the scalar part of the quaternion
     float s = q.w;
 
     // Do the math
-    vPrime = 2.0f * dot(u, v) * u
+    return 2.0f * dot(u, v) * u
           + (s*s - dot(u, u)) * v
           + 2.0f * s * cross(u, v);
-
-    return vPrime;
 }
 
 void main()

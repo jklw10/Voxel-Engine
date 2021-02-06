@@ -6,6 +6,7 @@ using System.Text;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Voxel_Engine.Utility
 {
@@ -34,6 +35,10 @@ namespace Voxel_Engine.Utility
                 src[i] = value;
             }
         }
+        public static void ShiftLeft<T>(this T[] array)
+        {
+            Array.Copy(array, 1, array, 0, array.Length - 1);
+        }
     }
 
     class Tools
@@ -47,6 +52,7 @@ namespace Voxel_Engine.Utility
             Vector3i.UnitZ,
             -Vector3i.UnitZ,
         };
+        
     }
 }
 

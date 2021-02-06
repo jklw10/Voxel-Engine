@@ -16,6 +16,8 @@ using Voxel_Engine.Utility;
 using Voxel_Engine.GUI;
 using Voxel_Engine.Rendering;
 
+using OpenTK.Windowing.GraphicsLibraryFramework;
+
 namespace Voxel_Engine
 {
     public class Engine
@@ -24,6 +26,9 @@ namespace Voxel_Engine
         {
             Size = new OpenTK.Mathematics.Vector2i(800, 600)
         };
+        /// <summary>
+        /// creates a window when activated 
+        /// </summary>
         public static void CreateWindow()
         {
             window.UpdateFrame  += OnUpdate;
@@ -39,6 +44,8 @@ namespace Voxel_Engine
         {
             window.Size = obj.Size;
             Camera.Main?.FitToScreen();
+            UI.OnResize(obj);
+            GL.Viewport(0,0,obj.Width,obj.Height);
         }
 
         private static void OnUpdate(FrameEventArgs e)
@@ -48,7 +55,7 @@ namespace Voxel_Engine
         static bool asd = true;
         private static void OnRender(FrameEventArgs e)
         {
-
+            Time.Update();
             
             if (Camera.Main is object)
             {
@@ -61,7 +68,6 @@ namespace Voxel_Engine
             try
             {
                 window.SwapBuffers();
-                
             }
             catch(Exception ex)
             {
