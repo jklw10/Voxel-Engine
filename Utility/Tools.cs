@@ -50,6 +50,7 @@ namespace Voxel_Engine.Utility
 
     class Tools
     {
+        
         public static Vector3i[] directions = new Vector3i[]
         {
             Vector3i.UnitX,
@@ -59,7 +60,25 @@ namespace Voxel_Engine.Utility
             Vector3i.UnitZ,
             -Vector3i.UnitZ,
         };
-        
+        public static Action Once(Action action)
+        {
+            var context = new ContextCallOnlyOnce();
+            void ret()
+            {
+                if (false == context.AlreadyCalled)
+                {
+                    action();
+                    context.AlreadyCalled = true;
+                }
+            }
+
+            return ret;
+        }
+        class ContextCallOnlyOnce
+        {
+            public bool AlreadyCalled;
+        }
+
     }
 }
 

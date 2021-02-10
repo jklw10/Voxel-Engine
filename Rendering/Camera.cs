@@ -77,6 +77,7 @@ namespace Voxel_Engine.Rendering
             DisplayPos = displayPos ?? new Vector2(0, 0);
             
             Transform = transform ?? new Transform(Vector3.Zero);
+            
 
             UpdateViewMatrix();
             UpdateProjectionMatrix();
@@ -119,16 +120,16 @@ namespace Voxel_Engine.Rendering
         /// <summary>
         /// updates the transformation matrices to reflect the new camera rotation/position
         /// </summary>
-        public void RenderCamera(bool clear)
-        {            
-
-            if (subCamera   is object)  subCamera.RenderCamera(false); //don't clear when rendering a sub camera
+        public void Render(bool clear)
+        {
+            if (subCamera   is object)  subCamera.Render(false); //don't clear when rendering a sub camera
 
             if (clear) GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             if (transform.Dirty) UpdateViewMatrix();
 
             GL.Enable(EnableCap.CullFace);
+            GL.Enable(EnableCap.DepthTest);
 
             GL.BindVertexArray(cubeVAO);
             GL.UseProgram(ProgramID);
@@ -224,8 +225,6 @@ namespace Voxel_Engine.Rendering
             GL.VertexAttribDivisor(2, 1);
             GL.VertexAttribDivisor(3, 1);
         }
-
-
         static void CreateCube()
         {
             cubeVAO = GL.GenVertexArray();
@@ -277,7 +276,6 @@ namespace Voxel_Engine.Rendering
             int IndexObjectID = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndexObjectID);
             GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(sizeof(uint) * indices.Length), indices, BufferUsageHint.StaticDraw);
-            
         }
     }
 }

@@ -11,7 +11,7 @@ using OpenTK.Windowing.Common;
 
 namespace Voxel_Engine.GUI
 {
-    public class DebugUI
+    public static class DebugUI
     {
         
         const int ammount = 120;
@@ -25,6 +25,7 @@ namespace Voxel_Engine.GUI
         static bool pause = false;
         static bool fpsCap = false;
         static bool toggle = false;
+        static bool called = false;
         public static void Toggle()
         {
             toggle = !toggle;
@@ -40,10 +41,8 @@ namespace Voxel_Engine.GUI
         }
         public static void GraphFrameTimes(ref double timeDelta)
         {
-            
             if (showGraph && !pause)
             {
-                //frameTimes.ShiftLeft();
                 frameTimes.ShiftLeft();
                 frameTimes[ammount-1] = (((float)timeDelta));
             }
@@ -66,19 +65,29 @@ namespace Voxel_Engine.GUI
                 }
             }
             ImGui.Begin("FrameTimeGraph");
-            if(ImGui.Button("uncap fps"))
+            if (!called) UI.Style();
+
+            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(1, 1, 1, 1));
+            if(ImGui.Button("FPS cap"))
             {
+                fpsCap = !fpsCap;
                 if (fpsCap)
                 {
                     Engine.window.RenderFrequency = 0;
                     Engine.window.VSync = VSyncMode.Off;
                 }
+                else
+                {
+                    Engine.window.RenderFrequency = 144;
+                    Engine.window.VSync = VSyncMode.Adaptive;
+                }
             }
+            ImGui.PopStyleColor();
             ImGui.SameLine();
 
             ImGui.SetWindowSize(new Vector2(800, 300));
             ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0);
-            UI.Style();
+            
 
             showGraph   = ImGui.Button("Show Graph") ? !showGraph : showGraph;
             ImGui.SameLine();
@@ -109,6 +118,7 @@ namespace Voxel_Engine.GUI
                 AverageEver = ImGui.Button("Reset") ? 0 : AverageEver;
             }
             ImGui.End();
+            called = true;
         }
     }
 }

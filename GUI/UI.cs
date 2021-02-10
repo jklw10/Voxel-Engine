@@ -33,6 +33,28 @@ namespace Voxel_Engine.GUI
             Vector3 a = (Vector3)new Vector3d(2, 2,2);
             
         }
+
+        public static void Detach()
+        {
+            Engine.window.CursorGrabbed = false;
+            Engine.window.CursorVisible = true;
+        }
+        public static void ToggleMouseAttachment()
+        {
+            if (Engine.window.CursorGrabbed)
+            {
+                Detach();
+            }
+            else
+            {
+                Attach();
+            }
+        }
+
+        public static void Attach()
+        {
+            Engine.window.CursorGrabbed = true;
+        }
         public static void OnResize(ResizeEventArgs obj)
         {
             // Tell ImGui of the new size
@@ -42,23 +64,13 @@ namespace Voxel_Engine.GUI
         {
             if (IsInitialized && IsActive)
             {
-                if (Window is null)
-                {
-                    throw new Exception("what? UI render was called without a window attachment");
-                }
+                if (Window is null)throw new ApplicationException("what? UI render was called without a window");
+                
                 controller?.Update(Window, (float)e.Time);
-                if (ImGuiAction is object)
-                {
-                    ImGuiAction.Invoke();
-                }
-                else
-                {
-                    // ImGui.ShowDemoWindow();
-                }
-
+                ImGuiAction?.Invoke();
                 controller?.Render();
 
-                Util.CheckGLError("End of frame");
+                Util.CheckGLError("End of imgui frame");
             }
         }
         public static void OnTextInput(TextInputEventArgs e)

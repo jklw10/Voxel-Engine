@@ -54,7 +54,7 @@ namespace Voxel_Engine
         private static void OnRender(FrameEventArgs e)
         {
             Time.Update(); 
-            Camera.Main?.RenderCamera(true);
+            Camera.Main?.Render(true);
             UI.Render(e);
             TrySwapBuffer();
         }
@@ -73,7 +73,6 @@ namespace Voxel_Engine
             UI.Init(window);
             Input.Initialize(window);
             GL.ClearColor(new Color4(0, 32, 48, 255));
-            GL.Enable(EnableCap.DepthTest);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
         }
     }
