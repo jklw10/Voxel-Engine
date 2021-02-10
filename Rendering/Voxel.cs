@@ -9,7 +9,7 @@ namespace Voxel_Engine.Rendering
     {
         public Color4 Color;
         public Transform Transform;
-
+        public bool visible;
         public Voxel(Color4 color, Vector3 pos)
         {
             Color = color;

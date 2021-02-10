@@ -12,9 +12,16 @@ namespace Voxel_Engine.Utility
 {
     static class Extensions
     {
-        public static Vector3i Modulo(this Vector3i a, Vector3i n)
+        public static Vector3i Modulo(this Vector3i a, int n)
         {
-            return (Vector3i)(a - (n * Vector3.Divide(a, n).Floor()));
+            return new Vector3i(Math.Abs(a.X) % n, Math.Abs(a.Y) % n, Math.Abs(a.Z) % n);
+        }
+        public static Vector3i Bitshift(this Vector3i v, int number)
+        {
+            int x = v.X >> number;
+            int y = v.Y >> number;
+            int z = v.Z >> number;
+            return new Vector3i(x, y, z);
         }
         public static Vector3 Floor(this Vector3 a)
         {
@@ -43,6 +50,7 @@ namespace Voxel_Engine.Utility
 
     class Tools
     {
+        
         public static Vector3i[] directions = new Vector3i[]
         {
             Vector3i.UnitX,
@@ -52,7 +60,25 @@ namespace Voxel_Engine.Utility
             Vector3i.UnitZ,
             -Vector3i.UnitZ,
         };
-        
+        public static Action Once(Action action)
+        {
+            var context = new ContextCallOnlyOnce();
+            void ret()
+            {
+                if (false == context.AlreadyCalled)
+                {
+                    action();
+                    context.AlreadyCalled = true;
+                }
+            }
+
+            return ret;
+        }
+        class ContextCallOnlyOnce
+        {
+            public bool AlreadyCalled;
+        }
+
     }
 }
 

@@ -11,10 +11,12 @@ namespace Voxel_Engine.DataHandling
     {
         readonly Vessel container;
         public Guid id;
-        public Entity(params IComponent[] components)
+        public Entity(Vessel? v = null,params IComponent[] components)
         {
             //#warning not thread safe at the moment
-            container = Vessel.Selected ?? throw new ApplicationException("You need to Select a vessel to use when creating entities.");
+
+
+            container = v ?? Vessel.Selected ?? throw new ApplicationException("You need to Select a vessel to use when creating entities.");
 
             id = container.BindIntoEntity(components);
         }
@@ -39,7 +41,7 @@ namespace Voxel_Engine.DataHandling
     {
         public static Vessel? Selected;
         List<Dictionary<Guid, IComponent>> EntityDataList = new List<Dictionary<Guid, IComponent>>();
-        
+        //TODO? guid to index queue + generation based on destruction.
         public Guid BindIntoEntity(IComponent[] entity)
         {
             Guid id;
@@ -125,7 +127,7 @@ namespace Voxel_Engine.DataHandling
 #if !DEBUG
             return Selected = this;
 #else
-            if (ObjectCount > 0 && !UseAsNonStatic) 
+            if (ObjectCount > 0 && !UseAsNonSingleton) 
             {
                 throw new ApplicationException("this method should only be used if a single vessel is active, if you want to ignore this rule set UseAsNonStatic to true");
             }
@@ -136,7 +138,7 @@ namespace Voxel_Engine.DataHandling
 #endif
         }
         public static int ObjectCount = 0;
-        public static bool UseAsNonStatic = false;
+        public static bool UseAsNonSingleton = false;
         public Vessel()
         {
             ObjectCount++;
