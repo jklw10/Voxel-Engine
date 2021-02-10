@@ -19,6 +19,7 @@ namespace Voxel_Engine.GUI
         public static bool IsInitialized { get; private set; }
         public static bool IsActive;
         public static Action? ImGuiAction;
+        
         public static void Init(GameWindow window)
         {
             Window = window;
@@ -39,23 +40,26 @@ namespace Voxel_Engine.GUI
         }
         public static void Render(FrameEventArgs e)
         {
-            if (Window is null)
+            if (IsInitialized && IsActive)
             {
-                throw new Exception("what? UI render was called without a window attachment");
-            }
-            controller?.Update(Window, (float)e.Time);
-            if (ImGuiAction is object)
-            {
-                ImGuiAction.Invoke();
-            }
-            else
-            {
-               // ImGui.ShowDemoWindow();
-            }
+                if (Window is null)
+                {
+                    throw new Exception("what? UI render was called without a window attachment");
+                }
+                controller?.Update(Window, (float)e.Time);
+                if (ImGuiAction is object)
+                {
+                    ImGuiAction.Invoke();
+                }
+                else
+                {
+                    // ImGui.ShowDemoWindow();
+                }
 
-            controller?.Render();
+                controller?.Render();
 
-            Util.CheckGLError("End of frame");
+                Util.CheckGLError("End of frame");
+            }
         }
         public static void OnTextInput(TextInputEventArgs e)
         {

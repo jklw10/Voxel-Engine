@@ -7,11 +7,13 @@ using ImGuiNET;
 using System.Numerics;
 using Voxel_Engine.Utility;
 using System.Collections;
+using OpenTK.Windowing.Common;
 
 namespace Voxel_Engine.GUI
 {
     public class DebugUI
     {
+        
         const int ammount = 120;
         static float[] frameTimes = new float[ammount];
         static int beginning;
@@ -21,6 +23,21 @@ namespace Voxel_Engine.GUI
         static bool showGraph = true;
         static bool showNumbers = true;
         static bool pause = false;
+        static bool fpsCap = false;
+        static bool toggle = false;
+        public static void Toggle()
+        {
+            toggle = !toggle;
+            if (toggle)
+            {
+                UI.ImGuiAction -= () => GraphFrameTimes(ref Time.DeltaTime);
+                UI.ImGuiAction += () => GraphFrameTimes(ref Time.DeltaTime);
+            }
+            else
+            {
+                UI.ImGuiAction -= () => GraphFrameTimes(ref Time.DeltaTime);
+            }
+        }
         public static void GraphFrameTimes(ref double timeDelta)
         {
             
@@ -28,9 +45,7 @@ namespace Voxel_Engine.GUI
             {
                 //frameTimes.ShiftLeft();
                 frameTimes.ShiftLeft();
-                   frameTimes[119] = ((float)timeDelta);
-
-
+                frameTimes[ammount-1] = (((float)timeDelta));
             }
             if (showNumbers)
             {
@@ -43,7 +58,7 @@ namespace Voxel_Engine.GUI
                         (AverageEver + frameTimes.Average()) / 2;
 
                 }
-                if(!showGraph&& !pause) frameTimes[beginning] = (float)timeDelta;
+                //if(!showGraph&& !pause) frameTimes[beginning] = (float)timeDelta;
 
                 if (highestEver < timeDelta)
                 {
@@ -51,24 +66,34 @@ namespace Voxel_Engine.GUI
                 }
             }
             ImGui.Begin("FrameTimeGraph");
-            showGraph = ImGui.Button("Show Graph") ? !showGraph : showGraph;
+            if(ImGui.Button("uncap fps"))
+            {
+                if (fpsCap)
+                {
+                    Engine.window.RenderFrequency = 0;
+                    Engine.window.VSync = VSyncMode.Off;
+                }
+            }
+            ImGui.SameLine();
+
+            ImGui.SetWindowSize(new Vector2(800, 300));
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0);
+            UI.Style();
+
+            showGraph   = ImGui.Button("Show Graph") ? !showGraph : showGraph;
             ImGui.SameLine();
             showNumbers = ImGui.Button("Show Numbers") ? !showNumbers : showNumbers;
             ImGui.SameLine();
-            pause = ImGui.Button("Pause") ? !pause : pause;
+            pause       = ImGui.Button("Pause") ? !pause : pause;
             if (showGraph)
             {
-                ImGui.SetWindowSize(new Vector2(800, 300));
-                UI.Style();
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0);
-
                 ImGui.PushButtonRepeat(true);
                 zoom *= ImGui.Button("Zoom +") ? 1.5f : 1;
                 ImGui.SameLine();
                 zoom /= ImGui.Button("Zoom -") ? 1.5f : 1;
                 ImGui.PushButtonRepeat(false);
 
-                ImGui.PlotHistogram("", ref frameTimes[0], ammount, 0, MathF.Round(zoom, 1) + "ms max", 0.0f, zoom, new Vector2(800, 100));
+                ImGui.PlotHistogram("", ref frameTimes[0], ammount, 0, MathF.Round(zoom, 1) + "ms max", 0.0f, zoom, new Vector2(800, 100)); 
             }
             if (showNumbers)
             {
@@ -85,8 +110,5 @@ namespace Voxel_Engine.GUI
             }
             ImGui.End();
         }
-        
-        
     }
-    
 }

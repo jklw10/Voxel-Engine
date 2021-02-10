@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+
 using OpenTK.Mathematics;
 
 using Voxel_Engine.Rendering;
@@ -8,13 +10,21 @@ using Voxel_Engine.Utility;
 
 namespace Voxel_Engine.DataHandling
 {
-    public class World
+    public class World : IEnumerable
     {
         public static World? Current;
-        public List<Chunk> ToDraw = new List<Chunk>();
+        List<Chunk> ToDraw = new List<Chunk>();
         public float VoxelSize = 1;
 
+        public int ChunkBitWidth = (int)Math.Sqrt(Chunk.Size);
+
         public int DrawnVoxelCount = 1;
+
+        public World()
+        {
+            ChunkBitWidth = (int)Math.Sqrt(Chunk.Size);
+            Select();
+        }
 
         public void RemoveAt(Vector3i pos)
         {
@@ -24,11 +34,16 @@ namespace Voxel_Engine.DataHandling
             {
                 ToDraw[index].Write((CR.X, CR.Y, CR.Z), null);
             }
+            foreach (Vector3 v in Tools.directions)
+            {
+
+            }
         }
         public void Write(Vector3i pos, Voxel c)
         {
             var (CC, CR) = Chunkify(pos);
             int index = ToDraw.FindIndex(X => X.ChunkCoordinate == CC);
+            c.visible = IsVisible(pos);
 
             if (index == -1)
             {
@@ -40,7 +55,10 @@ namespace Voxel_Engine.DataHandling
             {
                 ToDraw[index].Write((CR.X, CR.Y, CR.Z), c);
             }
-
+            if (c.visible)
+            {
+                DrawnVoxelCount++;
+            }
         }
         public bool IsVisible(Vector3i pos)
         {
@@ -64,7 +82,7 @@ namespace Voxel_Engine.DataHandling
             {
                 return false;
             }
-            else
+            else 
             {
                 return ((ToDraw[index]?.Read(CR) as Voxel)?.Color.A ?? 0) > 0;
             }
@@ -77,17 +95,25 @@ namespace Voxel_Engine.DataHandling
         public (Vector3i CC, Vector3i CR) Chunkify(Vector3i pos)
         {
             //TODO: bitshift and bitmanipulate to get faster?
-            //chunk in map coordinate
-            Vector3i CC = new Vector3i(pos.X / Chunk.Size, pos.Y / Chunk.Size, pos.Z / Chunk.Size);        
-            //chunk  relative to itself coordinate
-            Vector3i CR = new Vector3i(pos.X-1, pos.Y-1, pos.Z-1).Modulo(new Vector3i(Chunk.Size, Chunk.Size, Chunk.Size));      
-            return (CC, CR);
 
+
+            //chunk in map coordinate
+            Vector3i CC = pos.Bitshift(ChunkBitWidth);        
+            //chunk  relative to itself coordinate
+            Vector3i CR = pos.Modulo(Chunk.Size);      
+            
+            return (CC, CR);
         }
+        
 
         public void Select()
         {
             Current = this;
+        }
+
+        public IEnumerator GetEnumerator()
+        {
+            return ((IEnumerable)ToDraw).GetEnumerator();
         }
     }
 }

@@ -1,14 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Text;
+using System.Drawing;
+using System.Collections.Generic;
 
 using OpenTK;
 using OpenTK.Mathematics;
-using OpenTK.Windowing.Desktop;
 using OpenTK.Graphics.OpenGL4;
-
-using System.Drawing;
 using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Desktop;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 using ImGuiNET;
 
@@ -16,7 +16,6 @@ using Voxel_Engine.Utility;
 using Voxel_Engine.GUI;
 using Voxel_Engine.Rendering;
 
-using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace Voxel_Engine
 {
@@ -27,7 +26,7 @@ namespace Voxel_Engine
             Size = new OpenTK.Mathematics.Vector2i(800, 600)
         };
         /// <summary>
-        /// creates a window when activated 
+        /// Creates the game window
         /// </summary>
         public static void CreateWindow()
         {
@@ -52,30 +51,19 @@ namespace Voxel_Engine
         {
             Input.Update();
         }
-        static bool asd = true;
         private static void OnRender(FrameEventArgs e)
         {
-            Time.Update();
-            
-            if (Camera.Main is object)
-            {
-                Camera.Main.RenderCamera(true);
-            }
-            if (UI.IsInitialized && UI.IsActive)
-            {
-                UI.Render(e);
-            }
-            try
-            {
-                window.SwapBuffers();
-            }
-            catch(Exception ex)
-            {
+            Time.Update(); 
+            Camera.Main?.RenderCamera(true);
+            UI.Render(e);
+            TrySwapBuffer();
+        }
+        public static void TrySwapBuffer()
+        {
+            try { 
+                window.SwapBuffers(); 
+            }catch (Exception ex) {
                 Console.WriteLine(ex);
-            }
-            if (asd)
-            {
-                asd = false;
             }
         }
         private static void OnLoad()
@@ -85,6 +73,7 @@ namespace Voxel_Engine
             UI.Init(window);
             Input.Initialize(window);
             GL.ClearColor(new Color4(0, 32, 48, 255));
+            GL.Enable(EnableCap.DepthTest);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
         }
     }

@@ -33,7 +33,6 @@ namespace Voxel_Engine
         public Quaternion Rotation { get => rotation; set { rotation = value; Update(); } }
         public Vector3 Scale { get => scale; set { scale = value; Update(); } }
 
-        Action? OnUpdate;
         private void Update()
         {
             if (useMatrix)

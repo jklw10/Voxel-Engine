@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 
@@ -9,12 +10,11 @@ using OpenTK.Mathematics;
 
 namespace Voxel_Engine.DataHandling
 { 
-    public class Chunk
+    class Chunk : IEnumerable
     {
         public Vector3i ChunkCoordinate { get; set; }
 
-
-        public static int Size = 16;
+        public const int Size = 16;
         public IComponent?[,,] ChunkData = new IComponent[Size, Size, Size];
 
         public Chunk(Vector3i chunkCoordinate)
@@ -33,6 +33,12 @@ namespace Voxel_Engine.DataHandling
         {
             return ChunkData[c.X, c.Y, c.Z];
         }
+
+        public IEnumerator GetEnumerator()
+        {
+            return ChunkData.GetEnumerator();
+        }
+
         public IComponent? this[int x, int y, int z] 
         {
             get { return ChunkData[x, y, z]; }

@@ -23,8 +23,6 @@ namespace Voxel_Engine.Rendering
         }
 
         public Camera? subCamera;
-        
-
         public Vector2 ScreenSize
         {
             get => screenSize;
@@ -54,7 +52,6 @@ namespace Voxel_Engine.Rendering
             }
         }
 
-
 #nullable disable
         private Transform transform;
         private Vector2 screenSize;
@@ -67,7 +64,6 @@ namespace Voxel_Engine.Rendering
             ScreenSize = Engine.window.Size;
         }
 
-
         public float FOV = (float)Math.PI / 3;
 
         private static int ProgramID;
@@ -79,7 +75,7 @@ namespace Voxel_Engine.Rendering
 
             ScreenSize = screenSize;
             DisplayPos = displayPos ?? new Vector2(0, 0);
-
+            
             Transform = transform ?? new Transform(Vector3.Zero);
 
             UpdateViewMatrix();
@@ -111,6 +107,14 @@ namespace Voxel_Engine.Rendering
             GL.ProgramUniformMatrix4(ProgramID, GL.GetUniformLocation(ProgramID, "ProjMatrix"), true, ref ProjectionMatrix);
 
         }
+        public static void RotateCamera(Vector2 dir)
+        {
+            if (dir.LengthSquared == 0 || Main is null) return;
+
+            float MouseSensitivity = 0.2f;
+            Main.Transform.Rotation *= Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.DegreesToRadians(-dir.X * MouseSensitivity));
+            Main.Transform.Rotation *= Quaternion.FromAxisAngle(Vector3.UnitX, MathHelper.DegreesToRadians(-dir.Y * MouseSensitivity));
+        }
 
         /// <summary>
         /// updates the transformation matrices to reflect the new camera rotation/position
@@ -124,13 +128,15 @@ namespace Voxel_Engine.Rendering
 
             if (transform.Dirty) UpdateViewMatrix();
 
+            GL.Enable(EnableCap.CullFace);
+
             GL.BindVertexArray(cubeVAO);
             GL.UseProgram(ProgramID);
 
-            GL.DrawElementsInstanced(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, (IntPtr)0, 1);
+            GL.DrawElementsInstanced(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, (IntPtr)0, DrawnVoxelCount);
             GL.BindVertexArray(0);
         }
-        public static void Initialize()
+        static void Initialize()
         {
             CreateVisuals();
             CreateCube();
@@ -144,51 +150,51 @@ namespace Voxel_Engine.Rendering
 
             GL.UseProgram(ProgramID);
         }
+        int DrawnVoxelCount = 0;
 
-
-        public static void LoadWorld(World toLoad)
+        public void LoadWorld(World toLoad)
         {
+            DrawnVoxelCount = toLoad.DrawnVoxelCount;
             GL.UseProgram(ProgramID);
             GL.BindVertexArray(cubeVAO);
 
-            List<float> colors = new List<float>();
-            List<float> rotations = new List<float>();
-            List<float> positions = new List<float>();
+            float[,] colors     = new float[toLoad.DrawnVoxelCount, 4];
+            float[,] rotations  = new float[toLoad.DrawnVoxelCount, 4];
+            float[,] positions  = new float[toLoad.DrawnVoxelCount, 3];
 
 
             GL.ProgramUniform1(ProgramID, GL.GetUniformLocation(ProgramID, "Scale"), toLoad.VoxelSize);
-            
 
-            foreach (Chunk c in toLoad.ToDraw)
+            int voxId = 0;
+            foreach (Chunk c in toLoad)
             {
-                foreach (Voxel? v in c.ChunkData)
+                foreach (Voxel v in c)
                 {
                     if (v is object)
                     {
                         //color
-                        colors.Add(v.Color.A);
-                        colors.Add(v.Color.R);
-                        colors.Add(v.Color.G);
-                        colors.Add(v.Color.B);
-
+                        colors[voxId, 0] = (v.Color.R);
+                        colors[voxId, 1] = (v.Color.G);
+                        colors[voxId, 2] = (v.Color.B);
+                        colors[voxId, 3] = (v.Color.A);
                         //rotation
-                        rotations.Add(v.Transform.Rotation.X);
-                        rotations.Add(v.Transform.Rotation.Y);
-                        rotations.Add(v.Transform.Rotation.Z);
-                        rotations.Add(v.Transform.Rotation.W);
+                        rotations[voxId, 0] = (v.Transform.Rotation.X);
+                        rotations[voxId, 1] = (v.Transform.Rotation.Y);
+                        rotations[voxId, 2] = (v.Transform.Rotation.Z);
+                        rotations[voxId, 3] = (v.Transform.Rotation.W);
 
                         //position
-                        positions.Add(v.Transform.Position.X);
-                        positions.Add(v.Transform.Position.Y);
-                        positions.Add(v.Transform.Position.Z);
-
+                        positions[voxId, 0] = (v.Transform.Position.X);
+                        positions[voxId, 1] = (v.Transform.Position.Y);
+                        positions[voxId, 2] = (v.Transform.Position.Z);
+                        voxId++;
                     }
                 }
             }
 
             //voxel Color
             int VoxelColorBuffer = GL.GenBuffer();
-            float[] Colors = colors.ToArray();
+            float[,] Colors = colors;
             GL.BindBuffer(BufferTarget.ArrayBuffer, VoxelColorBuffer);
             GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * Colors.Length, Colors, BufferUsageHint.StaticDraw);
 
@@ -197,7 +203,7 @@ namespace Voxel_Engine.Rendering
 
             //voxel Rotations
             int RotationBuffer = GL.GenBuffer();
-            float[] Rotations = rotations.ToArray();
+            float[,] Rotations = rotations;
             GL.BindBuffer(BufferTarget.ArrayBuffer, RotationBuffer);
             GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * Rotations.Length, Rotations, BufferUsageHint.StaticDraw);
 
@@ -206,7 +212,7 @@ namespace Voxel_Engine.Rendering
 
             //voxel position
             int VoxelPos = GL.GenBuffer();
-            float[] Positions = positions.ToArray();
+            float[,] Positions = positions;
             GL.BindBuffer(BufferTarget.ArrayBuffer, VoxelPos);
             GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * Positions.Length, Positions, BufferUsageHint.StaticDraw);
 
@@ -228,21 +234,15 @@ namespace Voxel_Engine.Rendering
             int VID = GL.GenBuffer();
             float[] Vertices =
             {
-                   -0.5f,  0.5f,  0.5f,
-                    0.5f,  0.5f,  0.5f,
-                   -0.5f, -0.5f,  0.5f,
-
-                    0.5f, -0.5f,  0.5f,
-                   -0.5f, -0.5f, -0.5f,
-                    0.5f, -0.5f, -0.5f,
-
-                   -0.5f,  0.5f, -0.5f,
-                    0.5f,  0.5f, -0.5f,
-                   -0.5f,  0.5f,  0.5f,
-
-                   -0.5f,  0.5f, -0.5f,
-                    0.5f,  0.5f,  0.5f,
-                    0.5f,  0.5f, -0.5f
+                   0.5f,  0.5f,  0.5f, //top clockwise from top left
+                  -0.5f,  0.5f,  0.5f,
+                  -0.5f,  0.5f, -0.5f,
+                   0.5f,  0.5f, -0.5f,
+                                 
+                   0.5f, -0.5f,  0.5f, //bottom
+                  -0.5f, -0.5f,  0.5f,
+                  -0.5f, -0.5f, -0.5f,
+                   0.5f, -0.5f, -0.5f,
             };
             GL.BindBuffer(BufferTarget.ArrayBuffer, VID);
             GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * Vertices.Length, Vertices, BufferUsageHint.StaticDraw);
@@ -251,22 +251,27 @@ namespace Voxel_Engine.Rendering
             //GL.VertexPointer(3, VertexAttribPointerType.Float, Vector3.SizeInBytes, 0); 
             //GL.EnableClientState(ArrayCap.VertexArray);
             GL.EnableVertexAttribArray(0);
-
             //magic numbers for cube vertex indices ids (XYZ)
             indices = new uint[]
             {
-                0, 2, 1,
-                2, 3, 1,
-                8, 9, 2,
-                9, 4, 2,
-                2, 4, 3,
-                4, 5, 3,
-                3, 5,10,
-                5,11,10,
-                4, 6, 5,
-                6, 7, 5,
-                6, 0, 7,
-                0, 1, 7
+                //right hand rule, thumb = normal.
+                2, 1, 0, //top
+                3, 2, 0,
+                
+                4, 5, 6, //bottom
+                4, 6, 7,
+
+                0, 1, 4, //back
+                4, 1, 5,
+                
+                2, 3, 6, //front
+                6, 3, 7,
+
+                1, 2, 5, //left 1256
+                2, 6, 5,
+
+                0, 4, 3, //right 0347
+                3, 4, 7,
             };
 
             int IndexObjectID = GL.GenBuffer();
@@ -274,5 +279,5 @@ namespace Voxel_Engine.Rendering
             GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(sizeof(uint) * indices.Length), indices, BufferUsageHint.StaticDraw);
             
         }
-    }//*/
+    }
 }
