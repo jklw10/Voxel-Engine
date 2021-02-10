@@ -66,34 +66,30 @@ namespace Voxel_Engine.GUI
             }
             ImGui.Begin("FrameTimeGraph");
             if (!called) UI.Style();
-
-            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(1, 1, 1, 1));
-            if(ImGui.Button("FPS cap"))
+            if (UITools.ToggleButton("FPS cap", ref fpsCap))
             {
-                fpsCap = !fpsCap;
-                if (fpsCap)
-                {
-                    Engine.window.RenderFrequency = 0;
-                    Engine.window.VSync = VSyncMode.Off;
-                }
-                else
-                {
-                    Engine.window.RenderFrequency = 144;
-                    Engine.window.VSync = VSyncMode.Adaptive;
-                }
+
+                Engine.window.RenderFrequency = 0;
+                Engine.window.VSync = VSyncMode.Off;
             }
-            ImGui.PopStyleColor();
+            else
+            {
+                Engine.window.RenderFrequency = 144;
+                Engine.window.VSync = VSyncMode.Adaptive;
+
+            }
             ImGui.SameLine();
 
             ImGui.SetWindowSize(new Vector2(800, 300));
             ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0);
             
 
-            showGraph   = ImGui.Button("Show Graph") ? !showGraph : showGraph;
+            UITools.ToggleButton("Pause", ref pause);
             ImGui.SameLine();
-            showNumbers = ImGui.Button("Show Numbers") ? !showNumbers : showNumbers;
+            UITools.ToggleButton("Show Graph", ref showGraph);
             ImGui.SameLine();
-            pause       = ImGui.Button("Pause") ? !pause : pause;
+            UITools.ToggleButton("Show Numbers", ref showNumbers);
+           
             if (showGraph)
             {
                 ImGui.PushButtonRepeat(true);
