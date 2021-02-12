@@ -16,10 +16,10 @@ namespace Voxel_Engine.GUI
     {
         static ImGuiController? controller;
         static GameWindow? Window;
-        public static bool IsInitialized { get; private set; }
-        public static bool IsActive;
-        public static Action? ImGuiAction;
-        
+        public static bool IsInitialized    { get; private set; }
+        public static bool IsActive         { get; private set; }
+        public static Action? ImGuiAction   { get; private set; }
+
         public static void Init(GameWindow window)
         {
             Window = window;
@@ -30,7 +30,7 @@ namespace Voxel_Engine.GUI
 
             controller = new ImGuiController(1,1);
             IsInitialized = true;
-            Vector3 a = (Vector3)new Vector3d(2, 2,2);
+            Vector3 a = (Vector3)new Vector3d(2, 2, 2);
             
         }
 
