@@ -1,16 +1,9 @@
 ﻿using System;
-using System.Text;
-using System.Drawing;
-using System.Collections.Generic;
 
-using OpenTK;
 using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
-using OpenTK.Windowing.GraphicsLibraryFramework;
-
-using ImGuiNET;
 
 using Voxel_Engine.Utility;
 using Voxel_Engine.GUI;
@@ -21,15 +14,16 @@ namespace Voxel_Engine
 {
     public class Engine
     {
-        static public GameWindow window = new GameWindow(new GameWindowSettings(), new NativeWindowSettings())
+        static public readonly GameWindow window = new(new GameWindowSettings(), new NativeWindowSettings())
         {
-            Size = new OpenTK.Mathematics.Vector2i(800, 600)
+            Size = new(800, 600)
         };
         /// <summary>
         /// Creates the game window
         /// </summary>
         public static void CreateWindow()
         {
+            Reflector.Init();
             window.UpdateFrame  += OnUpdate;
             window.RenderFrame  += OnRender;
             window.Load         += OnLoad;
@@ -56,6 +50,8 @@ namespace Voxel_Engine
             Time.Update(); 
             Camera.Main?.Render(true);
             UI.Render(e);
+            //if(Camera.Debug is object)Camera.DontTestDepth();
+            //Camera.Debug?.Render(false);
             TrySwapBuffer();
         }
         public static void TrySwapBuffer()

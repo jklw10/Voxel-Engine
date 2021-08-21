@@ -9,40 +9,38 @@ using OpenTK.Mathematics;
 
 
 namespace Voxel_Engine.DataHandling
-{ 
-    class Chunk : IEnumerable
+{
+    using Rendering;
+    class Chunk 
     {
-        public Vector3i ChunkCoordinate { get; set; }
-
+        public Vector3i ChunkCoordinate;
         public const int Size = 16;
-        public IComponent?[,,] ChunkData = new IComponent[Size, Size, Size];
-
-        public Chunk(Vector3i chunkCoordinate)
+        public Voxel[,,] ChunkData = new Voxel[Size, Size, Size];
+        public bool Empty = true;
+        public bool Dirty = false;
+        public Chunk(Vector3i CC)
         {
-            ChunkCoordinate = chunkCoordinate;
+            ChunkCoordinate = CC;
         }
-        public Chunk(int x, int y, int z)
+        public Voxel this[Vector3i c]
         {
-            ChunkCoordinate = new Vector3i(x, y, z);
+            get { return this[c.X, c.Y, c.Z]; }
+            set { this[c.X, c.Y, c.Z] = value; }
         }
-        public void Write(Vector3i c, IComponent? entity)
-        {
-            ChunkData[c.X, c.Y, c.Z] = entity;
-        }
-        public IComponent? Read(Vector3i c)
-        {
-            return ChunkData[c.X, c.Y, c.Z];
-        }
-
-        public IEnumerator GetEnumerator()
-        {
-            return ChunkData.GetEnumerator();
-        }
-
-        public IComponent? this[int x, int y, int z] 
+        public Voxel this[int x, int y, int z]
         {
             get { return ChunkData[x, y, z]; }
-            set { ChunkData[x, y, z] = value; }
+            set { 
+                if(ChunkData[x, y, z] != value)
+                {
+                    ChunkData[x, y, z] = value;
+                    Dirty = true;
+                    if (value.Exists())
+                    {
+                        Empty = false;
+                    }
+                }
+            }
         }
     }
 }

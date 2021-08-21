@@ -2,9 +2,10 @@
 layout(location = 0) in vec3 Vertex;
 
 layout(location = 1) in vec4 ColorIn;
-layout(location = 2) in vec4 Rotation;
+//rotations
 layout(location = 3) in vec3 Translation;
 
+uniform vec4 Rotation;
 uniform float Scale;
 
 

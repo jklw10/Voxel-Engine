@@ -16,7 +16,20 @@ namespace Voxel_Engine.Rendering
 {
     public class Camera
     {
-        public static Camera? Main;
+        private static Camera? main;
+        public static Camera Main 
+        {
+            get
+            {
+                if (main is null) main = new(
+                    new ShaderPassStack());
+                return main;
+            }
+            private set
+            {
+                main = value;
+            } 
+        }
         public void Select()
         {
             Main = this;
@@ -29,7 +42,9 @@ namespace Voxel_Engine.Rendering
             set
             {
                 screenSize = value;
-                GL.ProgramUniform2(ProgramID, GL.GetUniformLocation(ProgramID, "Resolution"), ref screenSize);
+                passes.SetUniform2("Resolution",screenSize);
+                
+                CubeShader.SetScreenSize(screenSize);
                 UpdateProjectionMatrix();
             }
         }
@@ -39,7 +54,7 @@ namespace Voxel_Engine.Rendering
             set 
             {
                 displayPos = value;
-                GL.ProgramUniform2(ProgramID, GL.GetUniformLocation(ProgramID, "ScreenPos"), ref displayPos);
+                CubeShader.SetScreenPos(displayPos);
             } 
         }
         public Transform Transform 
@@ -53,10 +68,9 @@ namespace Voxel_Engine.Rendering
         }
 
 #nullable disable
-        private Transform transform;
-        private Vector2 screenSize;
-        private Vector2 displayPos;
-        private static uint[] indices; //what order to use vertices in.
+        private Transform transform = new(Vector3.Zero);
+        private Vector2 screenSize = Engine.window.Size;
+        private Vector2 displayPos = new(0);
 #nullable enable
 
         public void FitToScreen()
@@ -66,216 +80,160 @@ namespace Voxel_Engine.Rendering
 
         public float FOV = (float)Math.PI / 3;
 
-        private static int ProgramID;
 
-        private static int cubeVAO; //cube vertex data
-        public Camera(Vector2 screenSize, Vector2? displayPos = null, Transform? transform = null)
+        public Camera(ShaderPassStack passes)
         {
-            Initialize();
-
-            ScreenSize = screenSize;
-            DisplayPos = displayPos ?? new Vector2(0, 0);
-            
-            Transform = transform ?? new Transform(Vector3.Zero);
-            
-
+            this.passes = passes;
             UpdateViewMatrix();
             UpdateProjectionMatrix();
-            _ = indices ?? throw new ApplicationException("Voxel object mesh index creation failed");
+
+            _ = CubeShader.Indices ?? throw new ApplicationException("Voxel object mesh index creation failed");
         }
+
+        readonly ShaderPassStack passes;
 
         Matrix4 ViewMatrix;
         Matrix4 ProjectionMatrix;
 
         /// <summary>
-        /// call when camera is moved for it to take effect.
+        /// call when camera is moved to update the data inside shaders.
         /// </summary>
         public void UpdateViewMatrix()
         {
-            GL.UseProgram(ProgramID);
-            ViewMatrix = Transform.TransformMatrix.Inverted();
-            GL.ProgramUniformMatrix4(ProgramID, GL.GetUniformLocation(ProgramID, "ViewMatrix"), true, ref ViewMatrix);
+            ViewMatrix = transform.TransformMatrix.Inverted();
+
+            passes.SetUniform3("ViewPos",transform.Position);
+            passes.SetViewMatrix(ref ViewMatrix);
+            CubeShader.SetViewMatrix(ref ViewMatrix);
             transform.Dirty = false;
         }
 
         /// <summary>
-        /// call when fov or resolution is changed for it to take effect.
+        /// call when fov or resolution is changed to update the data inside shaders.
         /// </summary>
         public void UpdateProjectionMatrix()
         {
-            GL.UseProgram(ProgramID);
             ProjectionMatrix = Matrix4.CreatePerspectiveFieldOfView((float)Math.PI - FOV, (float)(screenSize.X / screenSize.Y), 0.1f, 1000);
-            GL.ProgramUniformMatrix4(ProgramID, GL.GetUniformLocation(ProgramID, "ProjMatrix"), true, ref ProjectionMatrix);
-
+            
+            passes.SetProjectionMatrix(ref ProjectionMatrix);
+            CubeShader.SetProjectionMatric(ref ProjectionMatrix);
         }
-        public static void RotateCamera(Vector2 dir)
+       
+        /// <summary>
+        /// x,y,tilt
+        /// </summary>
+        /// <param name="dir"></param>
+        public static void RotateCamera(Vector3 dir)
         {
             if (dir.LengthSquared == 0 || Main is null) return;
 
             float MouseSensitivity = 0.2f;
-            Main.Transform.Rotation *= Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.DegreesToRadians(-dir.X * MouseSensitivity));
-            Main.Transform.Rotation *= Quaternion.FromAxisAngle(Vector3.UnitX, MathHelper.DegreesToRadians(-dir.Y * MouseSensitivity));
+            Quaternion pitch = Quaternion.FromAxisAngle(Vector3.UnitX, MathHelper.DegreesToRadians(-dir.Y * MouseSensitivity));
+            Quaternion yaw = Quaternion.FromAxisAngle(Vector3.UnitY, MathHelper.DegreesToRadians(-dir.X * MouseSensitivity));
+            Main.Transform.Rotation = Main.Transform.Rotation * pitch * yaw;
         }
 
+        readonly int VoxelColorBuffer = GL.GenBuffer();
+        readonly int VoxelPosBuffer = GL.GenBuffer();
+
+        static readonly FrameBuffer RenderBuffer = new(
+            new(TextureType.Color),
+            new(TextureType.Depth) 
+            );
+
+
+
+        int DrawnVoxelCount = 0;
         /// <summary>
-        /// updates the transformation matrices to reflect the new camera rotation/position
+        /// Draws the loaded world on screen ! 
         /// </summary>
         public void Render(bool clear)
         {
-            if (subCamera   is object)  subCamera.Render(false); //don't clear when rendering a sub camera
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, RenderBuffer.handle);
+            {
+                if (clear) GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            if (clear) GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+                if (subCamera is object) subCamera.Render(false); //don't clear when rendering a sub camera
 
-            if (transform.Dirty) UpdateViewMatrix();
+                if (transform.Dirty) UpdateViewMatrix();
 
-            GL.Enable(EnableCap.CullFace);
-            GL.Enable(EnableCap.DepthTest);
 
-            GL.BindVertexArray(cubeVAO);
-            GL.UseProgram(ProgramID);
+                GL.Enable(EnableCap.DepthTest);
+                GL.Enable(EnableCap.CullFace);
 
-            GL.DrawElementsInstanced(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, (IntPtr)0, DrawnVoxelCount);
+                CubeShader.Use();
+
+                //GL.Disable(EnableCap.FramebufferSrgb);
+                if (!(loaded?.Dirty ?? true))
+                {
+                    GL.DrawElementsInstanced(PrimitiveType.Triangles, CubeShader.Indices.Length, DrawElementsType.UnsignedInt, (IntPtr)0, DrawnVoxelCount);
+                }
+                else
+                {
+                    GL.DrawElementsInstanced(PrimitiveType.Triangles, CubeShader.Indices.Length, DrawElementsType.UnsignedInt, (IntPtr)0, 0);
+                }
+                //GL.Enable(EnableCap.FramebufferSrgb);
+            }
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            GL.Disable(EnableCap.CullFace);
+            passes.Draw(RenderBuffer, clear);
+
             GL.BindVertexArray(0);
         }
-        static void Initialize()
+
+        IWorld<Voxel, Vector3i>? loaded;
+        public void LoadWorld(IWorld<Voxel, Vector3i> toLoad)
         {
-            CreateVisuals();
-            CreateCube();
-        }
-        static void CreateVisuals()
-        {
-            int VS = Shaders.LoadResource("vertex_shader", ShaderType.VertexShader);
-            int FS = Shaders.LoadResource("fragment_shader", ShaderType.FragmentShader);
+            loaded = toLoad;
+            DrawnVoxelCount = toLoad.VoxelCount;
 
-            ProgramID = Shaders.CreateProgram(VS, FS);
+            CubeShader.Use();
 
-            GL.UseProgram(ProgramID);
-        }
-        int DrawnVoxelCount = 0;
-
-        public void LoadWorld(World toLoad)
-        {
-            DrawnVoxelCount = toLoad.DrawnVoxelCount;
-            GL.UseProgram(ProgramID);
-            GL.BindVertexArray(cubeVAO);
-
-            float[,] colors     = new float[toLoad.DrawnVoxelCount, 4];
-            float[,] rotations  = new float[toLoad.DrawnVoxelCount, 4];
-            float[,] positions  = new float[toLoad.DrawnVoxelCount, 3];
-
-
-            GL.ProgramUniform1(ProgramID, GL.GetUniformLocation(ProgramID, "Scale"), toLoad.VoxelSize);
+            //GL.ProgramUniform1(Cube.Program, GL.GetUniformLocation(Cube.Program, "Scale"), toLoad.VoxelSize/40);
+            //float[] Positions = Tools.SpherePoints(DrawnVoxelCount);
+            CubeShader.SetScale(toLoad.VoxelSize);
+            CubeShader.SetRotation(new(0, 0, 0, 1));
 
             int voxId = 0;
-            foreach (Chunk c in toLoad)
+            var span = toLoad.GetPositionSpan();
+            float[,] colors    = new float[toLoad.VoxelCount, 4];
+            float[,] positions = new float[toLoad.VoxelCount, 3];
+            foreach (Vector3i pos in span)
             {
-                foreach (Voxel v in c)
+                Voxel v = toLoad[pos];
+                if (v.Exists())
                 {
-                    if (v is object)
-                    {
-                        //color
-                        colors[voxId, 0] = (v.Color.R);
-                        colors[voxId, 1] = (v.Color.G);
-                        colors[voxId, 2] = (v.Color.B);
-                        colors[voxId, 3] = (v.Color.A);
-                        //rotation
-                        rotations[voxId, 0] = (v.Transform.Rotation.X);
-                        rotations[voxId, 1] = (v.Transform.Rotation.Y);
-                        rotations[voxId, 2] = (v.Transform.Rotation.Z);
-                        rotations[voxId, 3] = (v.Transform.Rotation.W);
-
-                        //position
-                        positions[voxId, 0] = (v.Transform.Position.X);
-                        positions[voxId, 1] = (v.Transform.Position.Y);
-                        positions[voxId, 2] = (v.Transform.Position.Z);
-                        voxId++;
-                    }
+                    //color
+                    colors[voxId, 0] = (v.R) / 255f;
+                    colors[voxId, 1] = (v.G) / 255f;
+                    colors[voxId, 2] = (v.B) / 255f;
+                    colors[voxId, 3] = (v.A) / 255f;
+                    //position
+                    positions[voxId, 0] = ((pos.X) * toLoad.VoxelSize);
+                    positions[voxId, 1] = ((pos.Y) * toLoad.VoxelSize);
+                    positions[voxId, 2] = ((pos.Z) * toLoad.VoxelSize);
+                    voxId++;
                 }
             }
+            DrawnVoxelCount = voxId;
 
             //voxel Color
-            int VoxelColorBuffer = GL.GenBuffer();
-            float[,] Colors = colors;
             GL.BindBuffer(BufferTarget.ArrayBuffer, VoxelColorBuffer);
-            GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * Colors.Length, Colors, BufferUsageHint.StaticDraw);
-
+            GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * colors.Length, colors, BufferUsageHint.StaticDraw);
             GL.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, sizeof(float) * 4, 0);
-            GL.EnableVertexAttribArray(1);
-
-            //voxel Rotations
-            int RotationBuffer = GL.GenBuffer();
-            float[,] Rotations = rotations;
-            GL.BindBuffer(BufferTarget.ArrayBuffer, RotationBuffer);
-            GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * Rotations.Length, Rotations, BufferUsageHint.StaticDraw);
-
-            GL.VertexAttribPointer(2, 4, VertexAttribPointerType.Float, false, sizeof(float)*4, 0);
-            GL.EnableVertexAttribArray(2);
 
             //voxel position
-            int VoxelPos = GL.GenBuffer();
-            float[,] Positions = positions;
-            GL.BindBuffer(BufferTarget.ArrayBuffer, VoxelPos);
-            GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * Positions.Length, Positions, BufferUsageHint.StaticDraw);
-
-            GL.VertexAttribPointer(3, 3, VertexAttribPointerType.Float, false, sizeof(float) * 3, 0);
-            GL.EnableVertexAttribArray(3);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, VoxelPosBuffer);
+            GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * positions.Length, positions, BufferUsageHint.StaticDraw);
+            GL.VertexAttribPointer(2, 3, VertexAttribPointerType.Float, false, sizeof(float) * 3, 0);
 
             //per voxel aka per instance =1 per vertex = 0
+            GL.EnableVertexAttribArray(1);
+            GL.EnableVertexAttribArray(2);
             GL.VertexAttribDivisor(1, 1);
             GL.VertexAttribDivisor(2, 1);
-            GL.VertexAttribDivisor(3, 1);
-        }
-        static void CreateCube()
-        {
-            cubeVAO = GL.GenVertexArray();
-            GL.BindVertexArray(cubeVAO);
-            //magic numbers for cube vertices (xyz)
-            int VID = GL.GenBuffer();
-            float[] Vertices =
-            {
-                   0.5f,  0.5f,  0.5f, //top clockwise from top left
-                  -0.5f,  0.5f,  0.5f,
-                  -0.5f,  0.5f, -0.5f,
-                   0.5f,  0.5f, -0.5f,
-                                 
-                   0.5f, -0.5f,  0.5f, //bottom
-                  -0.5f, -0.5f,  0.5f,
-                  -0.5f, -0.5f, -0.5f,
-                   0.5f, -0.5f, -0.5f,
-            };
-            GL.BindBuffer(BufferTarget.ArrayBuffer, VID);
-            GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * Vertices.Length, Vertices, BufferUsageHint.StaticDraw);
 
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, sizeof(float)*3, 0);
-            //GL.VertexPointer(3, VertexAttribPointerType.Float, Vector3.SizeInBytes, 0); 
-            //GL.EnableClientState(ArrayCap.VertexArray);
-            GL.EnableVertexAttribArray(0);
-            //magic numbers for cube vertex indices ids (XYZ)
-            indices = new uint[]
-            {
-                //right hand rule, thumb = normal.
-                2, 1, 0, //top
-                3, 2, 0,
-                
-                4, 5, 6, //bottom
-                4, 6, 7,
-
-                0, 1, 4, //back
-                4, 1, 5,
-                
-                2, 3, 6, //front
-                6, 3, 7,
-
-                1, 2, 5, //left 1256
-                2, 6, 5,
-
-                0, 4, 3, //right 0347
-                3, 4, 7,
-            };
-
-            int IndexObjectID = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, IndexObjectID);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(sizeof(uint) * indices.Length), indices, BufferUsageHint.StaticDraw);
+            toLoad.CleanUp();
         }
     }
 }

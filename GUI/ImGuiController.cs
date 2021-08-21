@@ -198,7 +198,7 @@ void main()
             io.DeltaTime = deltaSeconds; // DeltaTime is in seconds.
         }
 
-        readonly List<char> PressedChars = new List<char>();
+        readonly List<char> PressedChars = new();
 
         private void UpdateImGuiInput(GameWindow wnd)
         {

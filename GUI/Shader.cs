@@ -23,7 +23,7 @@ namespace Voxel_Engine.GUI
     {
         public readonly string Name;
         public int Program { get; private set; }
-        private readonly Dictionary<string, int> UniformToLocation = new Dictionary<string, int>();
+        private readonly Dictionary<string, int> UniformToLocation = new();
         private bool Initialized = false;
 
         private readonly (ShaderType Type, string Path)[] Files;

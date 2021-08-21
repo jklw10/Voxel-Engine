@@ -4,48 +4,39 @@ using System.Text;
 using System.Linq;
 
 
-
 namespace Voxel_Engine.DataHandling
 {
-    public class Entity : IComponent
+
+    public struct Entity : IComponent
     {
-        readonly Vessel container;
         public Guid id;
-        public Entity(Vessel? v = null,params IComponent[] components)
+        public Entity(params IComponent[] components)
         {
-            //#warning not thread safe at the moment
-
-
-            container = v ?? Vessel.Selected ?? throw new ApplicationException("You need to Select a vessel to use when creating entities.");
-
-            id = container.BindIntoEntity(components);
+            id = Vessel.BindIntoEntity(components);
         }
         public IComponent? GetComponent<T>()
         {
-            return container.GetComponent(typeof(T), id);
+            return Vessel.GetComponent(typeof(T), id);
         }
         public IComponent AddComponent(IComponent component)
         {
-            container.AddComponent(id, component);
-            
+            Vessel.AddComponent(id, component);
             return component;
         }
-
-
     }
 
     /// <summary>
     /// entity component container and handler
     /// </summary>
-    public class Vessel
+    public static class Vessel
     {
-        public static Vessel? Selected;
-        List<Dictionary<Guid, IComponent>> EntityDataList = new List<Dictionary<Guid, IComponent>>();
+        static readonly List<Dictionary<Guid, IComponent>> EntityDataList = new();
+        
+
         //TODO? guid to index queue + generation based on destruction.
-        public Guid BindIntoEntity(IComponent[] entity)
+        public static Guid BindIntoEntity(IComponent[] entity)
         {
-            Guid id;
-            id = Guid.NewGuid();
+            Guid id = Guid.NewGuid();
             foreach(IComponent component in entity)
             {
                 AddComponent(id, component);
@@ -57,25 +48,23 @@ namespace Voxel_Engine.DataHandling
         /// </summary>
         /// <param name="component"></param>
         /// <returns></returns>
-        public long AddComponent(Guid id,IComponent component)
+        public static void AddComponent(Guid id, IComponent component)
         {
-            
             foreach (Dictionary<Guid, IComponent> componentSection in EntityDataList)
             {
                 if (componentSection.GetType().GetGenericArguments()[1] == component.GetType()) //compares dictionary value type to added component type
                 {
                     //if a dictionary with that type of value is found add the component with that id to that dictionary.
-                    componentSection.Add(id, component);
-                    return componentSection.Count-1;
+                    componentSection[id] = component;
+                    return;
                 }
             }
             //if the iteration above doesn't find a dictionary that hase the component type it must create a new dictionary
             EntityDataList.Add(new Dictionary<Guid, IComponent>());
             //then add the item to the last dictionary.
-            EntityDataList[^1].Add(id, component);
-            return 0;
+            EntityDataList[^1][id] = component;
         }
-        public IEnumerable<IComponent>? GetComponents(Type type)
+        public static IEnumerable<IComponent>? GetComponents(Type type)
         {
             try
             {
@@ -87,7 +76,7 @@ namespace Voxel_Engine.DataHandling
                 return null;
             }
         }
-        public IComponent? GetComponent(Type type, Guid id)
+        public static IComponent? GetComponent(Type type, Guid id)
         {
             try
             {
@@ -99,7 +88,7 @@ namespace Voxel_Engine.DataHandling
                 return null;
             }
         }
-        public bool DestroyEntity(Guid id)
+        public static bool DestroyEntity(Guid id)
         {
             try
             {
@@ -120,31 +109,8 @@ namespace Voxel_Engine.DataHandling
 #endif
             }
         }
-        public Vessel Select()
-        {
-//#warning not thread safe at the moment
-
-#if !DEBUG
-            return Selected = this;
-#else
-            if (ObjectCount > 0 && !UseAsNonSingleton) 
-            {
-                throw new ApplicationException("this method should only be used if a single vessel is active, if you want to ignore this rule set UseAsNonStatic to true");
-            }
-            else
-            {
-                return Selected = this;
-            }
-#endif
-        }
-        public static int ObjectCount = 0;
-        public static bool UseAsNonSingleton = false;
-        public Vessel()
-        {
-            ObjectCount++;
-        }
     }
-    public interface IComponent
+public interface IComponent
     {
 
     }

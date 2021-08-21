@@ -8,7 +8,7 @@ namespace Voxel_Engine.GUI
 {
     public static class Mcontrol
     {
-        public static void Open(this Enum toUse)
+        public static void Open([Menu] this  Enum toUse)
         {
             Menu.GetMenu(toUse)?.Open();
         }
@@ -21,7 +21,7 @@ namespace Voxel_Engine.GUI
             Menu.GetMenu(toUse)?.Toggle();
         }
     }
-    [AttributeUsage(AttributeTargets.Enum, Inherited = false, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Enum | AttributeTargets.Parameter, Inherited = false, AllowMultiple = true)]
     public sealed class MenuAttribute : Attribute
     {
         public MenuAttribute()
@@ -35,12 +35,12 @@ namespace Voxel_Engine.GUI
         [Menu]
         public enum Default : int
         {
-            NONE    = 1 << 0,
-            Debug   = 1 << 1,
-            Player  = 1 << 2,
-            Pause   = 1 << 3,
-            Main    = 1 << 4,
-            Loading = 1 << 5,
+            NONE    = 0 ,
+            Debug   = 1 << 0,
+            Player  = 1 << 1,
+            Pause   = 1 << 2,
+            Main    = 1 << 3,
+            Loading = 1 << 4,
         }
         public static Menu? GetMenu(Enum namer)
         {
@@ -51,16 +51,15 @@ namespace Voxel_Engine.GUI
             _ = new Menu(() => DebugUI.GraphFrameTimes(ref Time.DeltaTime), true, "frame time graph", Default.Debug);
 
         }
-        static List<Menu> _accessible = new List<Menu>();
+        static readonly List<Menu> _accessible = new();
 
         
-        Enum namer;
-        public bool NeedsCursor;
-        public bool IsActive;
-        private readonly Action ImguiAction;
-        bool toggle;
-        public string Name;
+        readonly Enum namer;
+        readonly Action ImguiAction;
+        public readonly bool NeedsCursor;
         
+        public bool IsActive;
+        public string Name;
         public void Open()
         {
             IsActive = true;
@@ -76,8 +75,7 @@ namespace Voxel_Engine.GUI
         }
         public void Toggle() 
         {
-            toggle = !toggle;
-            if (toggle)
+            if (!IsActive)
             {
                 Open();
             }
@@ -92,7 +90,7 @@ namespace Voxel_Engine.GUI
             NeedsCursor = needsCursor;
             Name = name;
             namer = e ?? Default.NONE;
-            _accessible.Add(this);
+            if(accessible) _accessible.Add(this);
         }
         public static Menu? operator +(Menu? a, Menu b)
         {

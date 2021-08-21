@@ -15,7 +15,7 @@ namespace Voxel_Engine.GUI
     {
         
         const int ammount = 120;
-        static float[] frameTimes = new float[ammount];
+        static readonly float[] frameTimes = new float[ammount];
         static int beginning;
         static float zoom = 10;
         static float highestEver;

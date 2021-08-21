@@ -5,17 +5,17 @@ using System.Text;
 using OpenTK;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-
 using OpenTK.Windowing.Common;
+
 
 namespace Voxel_Engine.Utility
 {
 	public static class Input
 	{
-		private static List<Keys>			keysDown		= new List<Keys>();
-		private static List<Keys>			keysDownLast	= new List<Keys>();
-		private static List<MouseButton>	buttonsDown		= new List<MouseButton>();
-		private static List<MouseButton>	buttonsDownLast	= new List<MouseButton>();
+		private static readonly List<Keys>			keysDown		= new();
+		private static readonly List<MouseButton>	buttonsDown		= new();
+		private static List<Keys>			keysDownLast	= new();
+		private static List<MouseButton>	buttonsDownLast	= new();
 
 		public static void Initialize(GameWindow game)
 		{

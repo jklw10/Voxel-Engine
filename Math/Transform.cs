@@ -27,7 +27,7 @@ namespace Voxel_Engine
             }
         }
         private bool useMatrix;
-        public bool Dirty = false;
+        public bool Dirty = false; //*/
 
         public Vector3 Position { get => position; set { position = value; Update(); } }
         public Quaternion Rotation { get => rotation; set { rotation = value; Update(); } }
@@ -35,13 +35,14 @@ namespace Voxel_Engine
 
         private void Update()
         {
+            
             if (useMatrix)
             {
                 transformMatrix = Matrix4.CreateScale(scale) *
                                   Matrix4.CreateFromQuaternion(rotation) *
                                   Matrix4.CreateTranslation(position);
             }
-            Dirty = true;
+            Dirty = true;//*/
         }
 
         public Transform(Vector3 position, Quaternion? rotation = null, Vector3? scale = null)
