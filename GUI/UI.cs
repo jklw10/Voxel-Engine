@@ -30,8 +30,8 @@ namespace Voxel_Engine.GUI
 
             controller = new ImGuiController(1,1);
             IsInitialized = true;
-            Vector3 a = (Vector3)new Vector3d(2, 2, 2);
-            
+            IsActive = true;
+
         }
 
         public static void Detach()
