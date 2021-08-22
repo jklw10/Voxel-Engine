@@ -18,7 +18,7 @@ namespace Voxel_Engine.GUI
         static GameWindow? Window;
         public static bool IsInitialized    { get; private set; }
         public static bool IsActive         { get; private set; }
-        public static Action? ImGuiAction   { get; private set; }
+        public static Action? ImGuiAction   { get; set; }
 
         public static void Init(GameWindow window)
         {

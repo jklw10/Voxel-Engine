@@ -43,6 +43,7 @@ namespace Voxel_Engine
 
         private static void OnUpdate(FrameEventArgs e)
         {
+            Time.PhysicsUpdate();
             Input.Update();
         }
         private static void OnRender(FrameEventArgs e)
