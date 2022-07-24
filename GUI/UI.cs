@@ -33,15 +33,16 @@ namespace Voxel_Engine.GUI
             IsActive = true;
 
         }
-
+        /// <summary>
+        /// makes cursor visible, and uncontained by screen
+        /// </summary>
         public static void Detach()
         {
-            Engine.window.CursorGrabbed = false;
-            Engine.window.CursorVisible = true;
+            Engine.Window.CursorState = CursorState.Normal;
         }
         public static void ToggleMouseAttachment()
         {
-            if (Engine.window.CursorGrabbed)
+            if (Engine.Window.CursorState != CursorState.Normal)
             {
                 Detach();
             }
@@ -50,10 +51,12 @@ namespace Voxel_Engine.GUI
                 Attach();
             }
         }
-
+        /// <summary>
+        /// makes cursor invisible, and contained to screen
+        /// </summary>
         public static void Attach()
         {
-            Engine.window.CursorGrabbed = true;
+            Engine.Window.CursorState = CursorState.Grabbed;
         }
         public static void OnResize(ResizeEventArgs obj)
         {

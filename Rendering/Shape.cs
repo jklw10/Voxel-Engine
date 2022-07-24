@@ -13,7 +13,7 @@ namespace Voxel_Engine.Rendering
     {
         public static void UseCube()
         {
-            GL.BindVertexArray(CubeShader.VAO);
+            CubeRenderer.Instance.Use();
         }
     }
 }

@@ -7,20 +7,21 @@ using System.Linq;
 namespace Voxel_Engine.DataHandling
 {
 
-    public struct Entity : IComponent
+    public struct Entity
     {
         public Guid id;
         public Entity(params IComponent[] components)
         {
-            id = Vessel.BindIntoEntity(components);
+            id = EntityContainer.CreateEntity(components);
         }
-        public IComponent? GetComponent<T>()
+        public bool TryGetComponent<T>(out IComponent? value)
         {
-            return Vessel.GetComponent(typeof(T), id);
+            EntityContainer.TryGetComponent(typeof(T), id, out value);
+            return value is not null;
         }
         public IComponent AddComponent(IComponent component)
         {
-            Vessel.AddComponent(id, component);
+            EntityContainer.AddComponent(id, component);
             return component;
         }
     }
@@ -28,13 +29,13 @@ namespace Voxel_Engine.DataHandling
     /// <summary>
     /// entity component container and handler
     /// </summary>
-    public static class Vessel
+    public static class EntityContainer
     {
-        static readonly List<Dictionary<Guid, IComponent>> EntityDataList = new();
+        static readonly Dictionary<Type, Dictionary<Guid, IComponent>> EntityDataList = new();
         
 
         //TODO? guid to index queue + generation based on destruction.
-        public static Guid BindIntoEntity(IComponent[] entity)
+        public static Guid CreateEntity(IComponent[] entity)
         {
             Guid id = Guid.NewGuid();
             foreach(IComponent component in entity)
@@ -50,43 +51,31 @@ namespace Voxel_Engine.DataHandling
         /// <returns></returns>
         public static void AddComponent(Guid id, IComponent component)
         {
-            foreach (Dictionary<Guid, IComponent> componentSection in EntityDataList)
+            var type = component.GetType();
+            if (EntityDataList.TryGetValue(type, out var componentSection ))
             {
-                if (componentSection.GetType().GetGenericArguments()[1] == component.GetType()) //compares dictionary value type to added component type
-                {
-                    //if a dictionary with that type of value is found add the component with that id to that dictionary.
-                    componentSection[id] = component;
-                    return;
-                }
+                //if a dictionary with that type of value is found add the component with that id to that dictionary.
+                componentSection[id] = component;
+                return;
             }
             //if the iteration above doesn't find a dictionary that hase the component type it must create a new dictionary
-            EntityDataList.Add(new Dictionary<Guid, IComponent>());
+            EntityDataList.Add(component.GetType(),new Dictionary<Guid, IComponent>());
             //then add the item to the last dictionary.
-            EntityDataList[^1][id] = component;
+            EntityDataList[type][id] = component;
         }
-        public static IEnumerable<IComponent>? GetComponents(Type type)
-        {
-            try
-            {
-                //find a dictionary with that type as value's type
-                return EntityDataList.Find(x => x.GetType().GetGenericArguments()[1] == type)?.Values;
-            }
-            catch
-            {
-                return null;
-            }
+        public static bool TryGetComponents(Type type, out IEnumerable<IComponent>? value)
+        {   //find a dictionary with that type as value's type
+            EntityDataList.TryGetValue(type, out var section);
+            value = section?.Values;
+            return value is not null;
         }
-        public static IComponent? GetComponent(Type type, Guid id)
+        public static bool TryGetComponent(Type type, Guid id, out IComponent? value)
         {
-            try
-            {
-                //find a dictionary with that type as value's type and find the one with ID as key
-                return EntityDataList.Find(x => x.GetType().GetGenericArguments()[1] == type)?[id];
-            }
-            catch
-            {
-                return null;
-            }
+            value = null;
+            //find a single entity's component
+            EntityDataList.TryGetValue(type, out var section);
+            section?.TryGetValue(id, out value);
+            return value is not null;
         }
         public static bool DestroyEntity(Guid id)
         {
@@ -95,7 +84,7 @@ namespace Voxel_Engine.DataHandling
                 foreach (var comps in EntityDataList)
                 {
                     //removes entity's components from dictionaries
-                    comps.Remove(id);
+                    comps.Value.Remove(id);
                 }
                 return true;
             }

@@ -48,7 +48,7 @@ namespace Voxel_Engine.GUI
         }
         public static void MakeDefaults()
         {
-            _ = new Menu(() => DebugUI.GraphFrameTimes(ref Time.DeltaTime), true, "frame time graph", Default.Debug);
+            _ = new Menu(() => DebugUI.GraphFrameTimes(), true, "frame time graph", Default.Debug);
 
         }
         static readonly List<Menu> _accessible = new();
@@ -65,24 +65,22 @@ namespace Voxel_Engine.GUI
             IsActive = true;
             UI.ImGuiAction -= ImguiAction;
             UI.ImGuiAction += ImguiAction;
-            if(NeedsCursor) UI.Attach();
+            if(NeedsCursor) UI.Detach(); //needs cursor. make it available
         }
         public void Close()
         {
             IsActive = false;
             UI.ImGuiAction -= ImguiAction;
-            if (NeedsCursor) UI.Detach();
+            if (NeedsCursor) UI.Attach();
         }
         public void Toggle() 
         {
-            if (!IsActive)
-            {
-                Open();
-            }
-            else
+            if (IsActive)
             {
                 Close();
+                return;
             }
+            Open();
         }
         public Menu(Action menuToShow, bool needsCursor = false, string name = "", Enum? e = null, bool accessible = true)
         {

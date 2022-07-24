@@ -11,115 +11,63 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace Voxel_Engine.Rendering
 {
-    public class ShaderPassStack
+    public class RenderPassStack 
     {
-        public ShaderPass[] All;
-        public void SetProjectionMatrix(ref Matrix4 projectionMatrix)
+        public void SetMatrix(string name, ref Matrix4 value)
         {
             foreach (var pass in All)
-            {
-                pass.SetMatrix("ProjMatrix",ref projectionMatrix);
-            }
-        }
-        public void SetViewMatrix(ref Matrix4 viewMatrix)
-        {
-            foreach (var pass in All)
-            {
-                pass.SetMatrix("ViewMatrix", ref viewMatrix);
-            }
+                pass.SetMatrix(name, ref value);
         }
         public void SetUniform1(string name, int value)
         {
             foreach (var pass in All)
-            {
                 pass.SetUniform1(name, value);
-            }
         }
-        public void SetUniform2(string name, Vector2 vector)
+        public void SetUniform2(string name, Vector2 value)
         {
             foreach (var pass in All)
-            {
-                pass.SetUniform2(name, vector);
-            }
+                pass.SetUniform2(name, value);
         }
-        public void SetUniform3(string name, Vector3 vector)
+        public void SetUniform3(string name, Vector3 value)
         {
             foreach (var pass in All)
-            {
-                pass.SetUniform3(name, vector);
-            }
+                pass.SetUniform3(name, value);
         }
-        public ShaderPassStack(params ShaderPass[] passes)
+        public void SetUniform3i(string name, Vector3i value)
         {
+            foreach (var pass in All)
+                pass.SetUniform3i(name, value);
+        }
+        public void SetUniform4(string name, Vector4 value)
+        {
+            foreach (var pass in All)
+                pass.SetUniform4(name, value);
+        }
+        public void Resize()
+        {
+            foreach (var pass in All) 
+                pass.OutputBuffer.Resize();
+        }
+        public void Render()
+        {
+            foreach (var pass in All)
+                pass.Render();
+        }
+        public DefaultRenderable[] All;
+        public RenderPassStack(params DefaultRenderable[] passes) => 
             All = passes;
-        }
-        public void Draw(FrameBuffer input, bool clear)
-        {
-            FrameBuffer previous = All[0].Draw(input,clear);
-            foreach (ShaderPass pass in All[1..])
-            {
-                previous = pass.Draw(previous,clear);
-            }
-        }
+        
     }
-    public class ShaderPass
+    public class ShaderPass : DefaultRenderable
     {
-        public readonly int Program;
-        public void Use()
-        {
-            GL.UseProgram(Program);
-        }
-        public void SetMatrix(string name,ref Matrix4 projectionMatrix)
-        {
-            GL.ProgramUniformMatrix4(Program, GL.GetUniformLocation(Program, name), true, ref projectionMatrix);
-        }
-        public void SetUniform3(string name,Vector3 position)
-        {
-            GL.ProgramUniform3(Program, GL.GetUniformLocation(Program, name), position);
-        }
-        public void SetUniform2(string name, Vector2 size)
-        {
-            GL.ProgramUniform2(Program, GL.GetUniformLocation(Program, name), size);
-        }
-        public void SetUniform1(string name, int value)
-        {
-            GL.ProgramUniform1(Program, GL.GetUniformLocation(Program, name), value);
-        }
-        static int CreateProgram(string shaderName)
-        {
-            int VS = Loader.LoadShader("Pass.vert", ShaderType.VertexShader);
-            int FS = Loader.LoadShader(shaderName+".frag", ShaderType.FragmentShader);
-            return Shader.CreateProgram(VS, FS);
-        }
-        public FrameBuffer Draw(FrameBuffer input, bool clear)
+        public readonly static VertexArrayObject VAO = new();
+        public override void Render()
         {
             Use();
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, Buffer.handle);
-            if (clear) GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            GL.BindTextures(0, input.output.Length, input.output);
+            VAO.Use();
             GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
-            return Buffer;
         }
-        public readonly FrameBuffer Buffer;
-
-        public ShaderPass(string shaderName, Texture[]? input = null, Texture[]? output = null)
-        {
-            Program = CreateProgram(shaderName);
-            Use();
-            for (int i = 0; i < (input?.Length ?? 0); i++)
-            {
-                GL.Uniform1(GL.GetUniformLocation(Program, input![i].Target), i);
-            }
-
-            if (output is  null)
-            {
-                Buffer = new FrameBuffer(0);
-            }
-            else
-            {
-                Buffer = new FrameBuffer(output);
-            }
-        }
+        public ShaderPass(string shaderName, Texture[]? input = null, FrameBuffer? output = null)
+            : base(input, new("Pass", shaderName), output) { }
     }
 }

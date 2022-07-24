@@ -11,78 +11,21 @@ using OpenTK.Mathematics;
 
 namespace Voxel_Engine.Rendering
 {
-    public static class CubeShader
+    using DataHandling;
+    public class CubeRenderer : DefaultRenderable
     {
-#nullable disable
-        public readonly static int VAO = GL.GenVertexArray();
-        public static uint[] Indices { get; private set; }
-        private static int Program;
-#nullable enable
-
-        public static void Use()
+        public readonly static CubeRenderer Instance = new();
+        public readonly ElementBufferObject EBO;
+        public override void Render()
         {
-            GL.UseProgram(Program);
-            GL.BindVertexArray(VAO);
-        }
-        public static void SetScale(float scale)
-        {
-            GL.ProgramUniform1(Program, GL.GetUniformLocation(Program, "Scale"), scale);
-        }
-        public static void SetRotation(Quaternion scale)
-        {
-            GL.ProgramUniform4(Program, GL.GetUniformLocation(Program, "Rotation"), scale);
-        }
-        public static void SetProjectionMatric(ref Matrix4 projectionMatrix)
-        {
-            GL.ProgramUniformMatrix4(Program, GL.GetUniformLocation(Program, "ProjMatrix"), true, ref projectionMatrix);
-        }
-        public static void SetViewMatrix(ref Matrix4 viewMatrix)
-        {
-            GL.ProgramUniformMatrix4(Program, GL.GetUniformLocation(Program, "ViewMatrix"), true, ref viewMatrix);
-        }
-        public static void SetScreenSize(Vector2 size)
-        {
-            GL.ProgramUniform2(Program, GL.GetUniformLocation(Program, "Resolution"), ref size);
-        }
-        public static void SetScreenPos(Vector2 pos)
-        {
-            GL.ProgramUniform2(Program, GL.GetUniformLocation(Program, "ScreenPos"), ref pos);
-        }
-        static void CreateProgram()
-        {
-            int VS = Loader.LoadShader("Base.vert", ShaderType.VertexShader);
-            int FS = Loader.LoadShader("Base.frag", ShaderType.FragmentShader);
-            Program = Shader.CreateProgram(VS, FS);
-        }
-        [InitFunction]
-        static void Init()
-        {
-            CreateProgram();
             Use();
-
-            //magic numbers for cube vertices (xyz)
-            int VBO = GL.GenBuffer();
-            float[] Vertices =
-            {
-                   0.5f,  0.5f,  0.5f, //top clockwise from top left
-                  -0.5f,  0.5f,  0.5f,
-                  -0.5f,  0.5f, -0.5f,
-                   0.5f,  0.5f, -0.5f,
-
-                   0.5f, -0.5f,  0.5f, //bottom
-                  -0.5f, -0.5f,  0.5f,
-                  -0.5f, -0.5f, -0.5f,
-                   0.5f, -0.5f, -0.5f,
-            };
-            GL.BindBuffer(BufferTarget.ArrayBuffer, VBO);
-            GL.BufferData(BufferTarget.ArrayBuffer, sizeof(float) * Vertices.Length, Vertices, BufferUsageHint.StaticDraw);
-
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, sizeof(float) * 3, 0);
-            //GL.VertexPointer(3, VertexAttribPointerType.Float, Vector3.SizeInBytes, 0); 
-            //GL.EnableClientState(ArrayCap.VertexArray);
-            GL.EnableVertexAttribArray(0);
-            //magic numbers for cube vertex indices ids (XYZ)
-            Indices = new uint[]
+            EBO.Use();
+            GL.DrawElements(PrimitiveType.Triangles,EBO.IBO.DataCount,DrawElementsType.UnsignedInt,0);
+        }
+        public CubeRenderer(Texture[]? textures = null, FrameBuffer? output = null) : base(textures,new("Base","Base"), output)
+        {
+            Use();
+            uint[] indices =
             {
                 //right hand rule, thumb = normal.
                 2, 1, 0, //top
@@ -103,11 +46,21 @@ namespace Voxel_Engine.Rendering
                 0, 4, 3, //right 0347
                 3, 4, 7,
             };
+            float[] vertices =
+            {
+                   0.5f,  0.5f,  0.5f, //top clockwise from top left
+                  -0.5f,  0.5f,  0.5f,
+                  -0.5f,  0.5f, -0.5f,
+                   0.5f,  0.5f, -0.5f,
 
-            int IBO = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, IBO);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, (IntPtr)(sizeof(uint) * Indices.Length), Indices, BufferUsageHint.StaticDraw);
-            return;
+                   0.5f, -0.5f,  0.5f, //bottom
+                  -0.5f, -0.5f,  0.5f,
+                  -0.5f, -0.5f, -0.5f,
+                   0.5f, -0.5f, -0.5f,
+            };
+
+            EBO = new(indices,
+                new VertexBufferObject(BufferUsageHint.StaticDraw,0,3,vertices));
         }
     }
 }

@@ -11,61 +11,60 @@ namespace Voxel_Engine.Rendering
 {
     public enum TextureType
     {
-        Color,
+        Color4,
+        Float3,
+        Float,
         Depth,
     }
-    public class Texture
+    public struct Texture
     {
         public TextureType Type;
         public string Target;
         public int handle;
 
 
-        public Texture(TextureType type)
+        public Texture(TextureType type, string? target = null, Vector2i? size = null)
         {
             Type = type;
-            Target = "";
-            handle = CreateTexture(type, Engine.window.Size);
+            Target = target ?? "";
+            handle = CreateTexture(type, size ?? Engine.Window.Size);
         }
-        public Texture(TextureType type, string target)
+        public static void BindTexture(int handle, TextureType type, Vector2i size)
         {
-            Type = type;
-            Target = target;
-            handle = CreateTexture(type, Engine.window.Size);
+            GL.BindTexture(TextureTarget.Texture2D, handle);
+            switch (type)
+            {
+                case TextureType.Color4:
+                    FormatColor4(size);
+                    break;
+                case TextureType.Float3:
+                    FormatFloat3(size);
+                    break;
+                case TextureType.Float:
+                    FormatFloat(size);
+                    break;
+                case TextureType.Depth:
+                    FormatDepth(size);
+                    break;
+                default:
+                    throw new ArgumentException("not a valid type of texture");
+            }
+            GL.BindTexture(TextureTarget.Texture2D, 0);
         }
-        public Texture(TextureType type, string target, Vector2i size)
+        public void Resize(Vector2i size)
         {
-            Type = type;
-            Target = target;
-            handle = CreateTexture(type, size);
-        }
-        public Texture(TextureType type, Vector2i size)
-        {
-            Type = type;
-            Target = "";
-            handle = CreateTexture(type, size);
+            BindTexture(handle, Type, size);
         }
 
         public static int CreateTexture(TextureType type, Vector2i size)
         {
             int tex = GL.GenTexture();
-            switch (type)
-            {
-                case TextureType.Color:
-                    BindColor(tex, size);
-                    break;
-                case TextureType.Depth:
-                    BindDepth(tex, size);
-                    break;
-                default:
-                    break;
-            }
+            BindTexture(tex, type, size);
             return tex;
         }
-        public static void BindDepth(int textureBuffer, Vector2i size)
+        private static void FormatDepth(Vector2i size)
         {
-            GL.BindTexture(TextureTarget.Texture2D, textureBuffer);
-            
+
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.DepthComponent, size.X, size.Y, 0, PixelFormat.DepthComponent, PixelType.UnsignedByte, (IntPtr)null);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureCompareMode, (int)TextureCompareMode.None);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
@@ -73,15 +72,29 @@ namespace Voxel_Engine.Rendering
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureCompareFunc, (int)DepthFunction.Lequal);
-            GL.BindTexture(TextureTarget.Texture2D, 0);//unbind
+       
         }
-        public static void BindColor(int textureBuffer, Vector2i size)
+        private static void FormatColor4(Vector2i size)
         {
-            GL.BindTexture(TextureTarget.Texture2D, textureBuffer);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Srgb, size.X, size.Y, 0, PixelFormat.Rgb, PixelType.UnsignedByte, (IntPtr)null);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, size.X, size.Y, 0, PixelFormat.Rgba, PixelType.Int, (IntPtr)null);
+            DefaultParameters();
+        }
+        private static void FormatFloat3(Vector2i size)
+        {
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb32f, size.X, size.Y, 0, PixelFormat.Rgb, PixelType.Float, (IntPtr)null);
+            DefaultParameters();
+        }
+        private static void FormatFloat(Vector2i size)
+        {
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.R32f, size.X, size.Y, 0, PixelFormat.Red, PixelType.Float, (IntPtr)null);
+            DefaultParameters();
+        }
+        private static void DefaultParameters()
+        {
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-            GL.BindTexture(TextureTarget.Texture2D, 0);//unbind
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
         }
     }
 }

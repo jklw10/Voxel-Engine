@@ -9,21 +9,23 @@ namespace Voxel_Engine.Rendering
 {
     public struct Voxel : IComponent
     {
-        public static readonly Voxel EMPTY = new(0,0,0,0);
-        public byte A, R, G, B;
-        public Voxel(Color color)
-        {
-            A = color.A;
-            R = color.R;
-            G = color.G;
-            B = color.B;
-        }
+        public static readonly Voxel EMPTY = new(0);
+        public uint colors;
+        public byte R { get => (byte)((colors & 0x000000FF) ); }
+        public byte G { get => (byte)((colors & 0x0000FF00) >> 8); }
+        public byte B { get => (byte)((colors & 0x00FF0000) >> 16); }
+        public byte A { get => (byte)((colors & 0xFF000000) >> 24); }
         public Voxel(byte A, byte R, byte G, byte B)
         {
-            this.A = A;
-            this.R = R;
-            this.G = G;
-            this.B = B;
+            colors = BitConverter.ToUInt32(new byte[] {R,G,B,A });
+        }
+        public Voxel(Color4 v)
+        {
+            colors = BitConverter.ToUInt32(new byte[] { (byte)(v.R * 255), (byte)( v.G*255), (byte)(v.B * 255), (byte)(v.A * 255) });
+        }
+        public Voxel(uint color)
+        {
+            colors = color;
         }
         public bool Exists()
         {
@@ -31,14 +33,14 @@ namespace Voxel_Engine.Rendering
         }
         public override string ToString()
         {
-            return $"({A},{R},{G},{B})";
+            return $"({R},{G},{B},{A})";
         }
         public static bool operator ==(Voxel a, Voxel b)
         {
-            return a.A == b.A
-                && a.R == b.R
+            return a.R == b.R
                 && a.G == b.G
-                && a.B == b.B;
+                && a.B == b.B
+                && a.A == b.A;
         }
         public static bool operator !=(Voxel a, Voxel b)
         {
@@ -46,35 +48,36 @@ namespace Voxel_Engine.Rendering
         }
         public static Voxel operator -(Voxel a, Voxel b)
         {
-            a.A -= b.A;
-            a.R -= b.R;
-            a.G -= b.G;
-            a.B -= b.B;
-            return a;
+            return new Voxel(
+            (byte)(a.R - b.R),
+            (byte)(a.G - b.G),
+            (byte)(a.B - b.B),
+            (byte)(a.A - b.A));
+            
         }
         public static Voxel operator +(Voxel a, Voxel b)
         {
-            a.A += b.A;
-            a.R += b.R;
-            a.G += b.G;
-            a.B += b.B;
-            return a;
+            return new Voxel(
+            (byte)(a.R + b.R),
+            (byte)(a.G + b.G),
+            (byte)(a.B + b.B),
+            (byte)(a.A + b.A));
         }
         public static Voxel operator *(Voxel a, Voxel b)
         {
-            a.A *= b.A;
-            a.R *= b.R;
-            a.G *= b.G;
-            a.B *= b.B;
-            return a;
+            return new Voxel(
+            (byte)(a.R * b.R),
+            (byte)(a.G * b.G),
+            (byte)(a.B * b.B),
+            (byte)(a.A * b.A));
         }
         public static Voxel operator /(Voxel a, Voxel b)
         {
-            a.A /= b.A;
-            a.R /= b.R;
-            a.G /= b.G;
-            a.B /= b.B;
-            return a;
+            return new Voxel(
+            (byte)(a.R / b.R),
+            (byte)(a.G / b.G),
+            (byte)(a.B / b.B),
+            (byte)(a.A / b.A));
         }
 
         public override bool Equals(object? obj)
@@ -83,7 +86,11 @@ namespace Voxel_Engine.Rendering
         }
         public override int GetHashCode()
         {
-            return HashCode.Combine(A,R,G,B);
+            return (int)colors;
+        }
+        public static implicit operator uint(Voxel a)
+        {
+            return a.colors;
         }
     }
 }

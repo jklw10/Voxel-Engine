@@ -11,11 +11,11 @@ using OpenTK.Mathematics;
 namespace Voxel_Engine.DataHandling
 {
     using Rendering;
-    class Chunk 
+    public class Chunk 
     {
         public Vector3i ChunkCoordinate;
         public const int Size = 16;
-        public Voxel[,,] ChunkData = new Voxel[Size, Size, Size];
+        public uint[] ChunkData = new uint[Size* Size* Size];
         public bool Empty = true;
         public bool Dirty = false;
         public Chunk(Vector3i CC)
@@ -29,11 +29,11 @@ namespace Voxel_Engine.DataHandling
         }
         public Voxel this[int x, int y, int z]
         {
-            get { return ChunkData[x, y, z]; }
+            get { return new(ChunkData[x+Size*( y+ Size* z)]); }
             set { 
-                if(ChunkData[x, y, z] != value)
+                if(ChunkData[x + Size * (y + Size * z)] != value)
                 {
-                    ChunkData[x, y, z] = value;
+                    ChunkData[x + Size * (y + Size * z)] = value;
                     Dirty = true;
                     if (value.Exists())
                     {

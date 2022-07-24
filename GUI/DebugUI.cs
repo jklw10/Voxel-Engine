@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ImGuiNET;
-using System.Numerics;
 using Voxel_Engine.Utility;
 using System.Collections;
 using OpenTK.Windowing.Common;
+using Voxel_Engine.Rendering;
 
 namespace Voxel_Engine.GUI
 {
@@ -31,16 +31,17 @@ namespace Voxel_Engine.GUI
             toggle = !toggle;
             if (toggle)
             {
-                UI.ImGuiAction -= () => GraphFrameTimes(ref Time.DeltaTime);
-                UI.ImGuiAction += () => GraphFrameTimes(ref Time.DeltaTime);
+                UI.ImGuiAction -= () => GraphFrameTimes();
+                UI.ImGuiAction += () => GraphFrameTimes();
             }
             else
             {
-                UI.ImGuiAction -= () => GraphFrameTimes(ref Time.DeltaTime);
+                UI.ImGuiAction -= () => GraphFrameTimes();
             }
         }
-        public static void GraphFrameTimes(ref double timeDelta)
+        public static void GraphFrameTimes()
         {
+            double timeDelta = Time.DeltaTime;
             if (showGraph && !pause)
             {
                 frameTimes.ShiftLeft();
@@ -69,18 +70,18 @@ namespace Voxel_Engine.GUI
             if (UITools.ToggleButton("FPS cap", ref fpsCap))
             {
 
-                Engine.window.RenderFrequency = 0;
-                Engine.window.VSync = VSyncMode.Off;
+                Engine.Window.RenderFrequency = 0;
+                Engine.Window.VSync = VSyncMode.Off;
             }
             else
             {
-                Engine.window.RenderFrequency = 144;
-                Engine.window.VSync = VSyncMode.Adaptive;
+                Engine.Window.RenderFrequency = 144;
+                Engine.Window.VSync = VSyncMode.Adaptive;
 
             }
             ImGui.SameLine();
 
-            ImGui.SetWindowSize(new Vector2(800, 300));
+            ImGui.SetWindowSize(new System.Numerics.Vector2(800, 300));
             ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0);
             
 
@@ -98,7 +99,7 @@ namespace Voxel_Engine.GUI
                 zoom /= ImGui.Button("Zoom -") ? 1.5f : 1;
                 ImGui.PushButtonRepeat(false);
 
-                ImGui.PlotHistogram("", ref frameTimes[0], ammount, 0, MathF.Round(zoom, 1) + "ms max", 0.0f, zoom, new Vector2(800, 100)); 
+                ImGui.PlotHistogram("", ref frameTimes[0], ammount, 0, MathF.Round(zoom, 1) + "ms max", 0.0f, zoom, new System.Numerics.Vector2(800, 100)); 
             }
             if (showNumbers)
             {

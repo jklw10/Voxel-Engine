@@ -16,11 +16,15 @@ namespace Voxel_Engine.DataHandling
 
         public int VoxelCount { get; private set; }
 
+        internal Dictionary<(int,int,int), Chunk> ToDraw = new();
 
-        Dictionary<(int,int,int), Chunk> ToDraw = new();
         public float VoxelSize { get => 1;}
 
         public readonly static int ChunkBitWidth = (int)Math.Sqrt(Chunk.Size);
+
+        public bool TryGetChunk(Vector3i CC, out Chunk? value) => 
+            ToDraw.TryGetValue((CC.X, CC.Y, CC.Z), out value);
+        
 
 
         public ChunkWorld()
