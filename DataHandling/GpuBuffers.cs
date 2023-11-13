@@ -23,7 +23,7 @@ namespace Voxel_Engine.DataHandling
             if (data is not null)
                 SetData(data);
         }
-        public void SetData(params T[] data)
+        public void SetData( T[] data)
         {
             Use();
             DataCount = data.Length;

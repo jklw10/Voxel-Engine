@@ -16,7 +16,7 @@ public class Camera
     {
         get
         {
-            if (main is null) main = new(
+            main ??= new(
                 new RenderPassStack());
             return main;
         }
@@ -39,7 +39,7 @@ public class Camera
         set
         {
             screenSize = value;
-            passes.SetUniform2("Resolution",screenSize);
+            passes.SetUniform(Uniform.Resolution(new(screenSize)));
             UpdateProjectionMatrix();
             passes.Resize();
         }
@@ -101,9 +101,12 @@ public class Camera
     {
         ViewMatrix = transform.TransformMatrix().Inverted();
         Quaternion rot = transform.Rotation;
-        passes.SetUniform4("CamRot", new Vector4(rot.Xyz,rot.W));
-        passes.SetUniform3("ViewPos",transform.Position);
-        passes.SetMatrix("ViewMatrix", ref ViewMatrix);
+        //passes.SetUniform4("CamRot", new Vector4(rot.Xyz,rot.W));
+        //passes.SetUniform3("ViewPos",transform.Position);
+        //passes.SetMatrix("ViewMatrix", ref ViewMatrix);
+        passes.SetUniform(Uniform.CameraRotation(new(new(rot.Xyz, rot.W))));
+        passes.SetUniform(Uniform.CameraPosition(new(transform.Position)));
+        passes.SetUniform(Uniform.ViewMatrix(new(ViewMatrix)));
     }
 
     /// <summary>
@@ -115,7 +118,8 @@ public class Camera
             Matrix4.CreatePerspectiveFieldOfView((float)Math.PI - FOV, 
             (float)(screenSize.X / screenSize.Y), 0.1f, 1000);
 
-        passes.SetMatrix("ProjMatrix", ref ProjectionMatrix);
+        //passes.SetMatrix("ProjMatrix", ref ProjectionMatrix);
+        passes.SetUniform(Uniform.ProjectionMatrix(new(ProjectionMatrix)));
     }
    
     /// <summary>

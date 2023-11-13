@@ -1,12 +1,13 @@
 ﻿namespace Voxel_Engine.Rendering;
-public struct ElementBufferObject
+public readonly struct ElementBufferObject
 {
-    public readonly VertexArrayObject VAO = new();
+    public readonly VertexArrayObject VAO;
     public readonly BufferObject<uint> IBO;
     public readonly VertexBufferObject[] VBO;
     public void Use() => VAO.Use();
-    public ElementBufferObject(uint[]? indices = null, params VertexBufferObject[] VBO)
+    public ElementBufferObject(VertexArrayObject vao,uint[]? indices = null, params VertexBufferObject[] VBO)
     {
+        VAO = vao;
         VAO.Use();
         Array.ForEach(VBO, x => x.Enable());
         indices ??= Array.Empty<uint>();
@@ -30,7 +31,7 @@ public struct ElementBufferObject
         }
     }
 }
-public struct VertexArrayObject
+public readonly struct VertexArrayObject
 {
     public readonly int Handle = GL.GenVertexArray();
     public void Use() => GL.BindVertexArray(Handle);

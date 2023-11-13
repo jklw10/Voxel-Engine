@@ -20,12 +20,12 @@ namespace Voxel_Engine.DataHandling
         {
             Main = this;
         }
-
         public ChunkStreamer(IChunkConsumer cc, ITerrainGenerator tg)
         {
             worldGen = tg;
             chunkConsumer = cc;
         }
+        
         public void Load()
         {
             if (chunkConsumer is null || worldGen is null) return;

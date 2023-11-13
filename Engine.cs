@@ -3,8 +3,17 @@
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 
+public record EventLoopRunnable
+{
+    public record OnLoad(Action Act) : EventLoopRunnable;
+    public record OnRender(Action<FrameEventArgs> Act) : EventLoopRunnable;
+    public record OnUpdate(Action<FrameEventArgs> Act) : EventLoopRunnable;
+    public record OnResize(Action<ResizeEventArgs> Act) : EventLoopRunnable;
+}
+
 public class Engine
 {
+    
     static public readonly GameWindow Window = new(new(), new())
     {
         Size = new(800, 600)
@@ -12,8 +21,26 @@ public class Engine
     /// <summary>
     /// Creates the game window
     /// </summary>
-    public static void CreateWindow()
+    public static void CreateWindow(params EventLoopRunnable[] items)
     {
+        foreach (var item in items)
+        {
+            switch(item)
+            {
+                case EventLoopRunnable.OnLoad(Action act): 
+                    Window.Load += act;
+                    break;
+                case EventLoopRunnable.OnRender(Action<FrameEventArgs> act):
+                    Window.RenderFrame += act;
+                    break;
+                case EventLoopRunnable.OnUpdate(Action<FrameEventArgs> act):
+                    Window.UpdateFrame += act;
+                    break;
+                case EventLoopRunnable.OnResize(Action<ResizeEventArgs> act):
+                    Window.Resize += act;
+                    break;
+            }
+        }
         Window.UpdateFrame += OnUpdate;
         Window.RenderFrame += OnRender;
         Window.Load += OnLoad;
@@ -43,19 +70,9 @@ public class Engine
         Time.Update();
         Camera.Render();
         UI.Render(e);
-        TrySwapBuffer();
+        Window.SwapBuffers();
     }
-    public static void TrySwapBuffer()
-    {
-        try
-        {
-            Window.SwapBuffers();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex);
-        }
-    }
+
     static void OnLoad()
     {
         Utility.Debug.DebugTools.Enable();

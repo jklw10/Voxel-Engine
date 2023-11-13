@@ -12,19 +12,26 @@ using OpenTK.Mathematics;
 namespace Voxel_Engine.Rendering
 {
     using DataHandling;
-    public class CubeRenderer : DefaultRenderable
+    public class CubeRenderer : IRenderable
     {
-        public readonly static CubeRenderer Instance = new();
+        static CubeRenderer? instancebacking;
+        public static CubeRenderer Instance {
+            get {
+                instancebacking ??= new();
+                return instancebacking;
+            }
+        }
+
+        public RenderObject GetRenderable() => RenderObject;
+        public readonly RenderObject RenderObject;
         public readonly ElementBufferObject EBO;
-        public override void Render()
+        public void Render()
         {
-            Use();
-            EBO.Use();
+            RenderObject.Use();
             GL.DrawElements(PrimitiveType.Triangles,EBO.IBO.DataCount,DrawElementsType.UnsignedInt,0);
         }
-        public CubeRenderer(Texture[]? textures = null, FrameBuffer? output = null) : base(textures,new("Base","Base"), output)
+        public CubeRenderer(FrameBuffer? output = null, params Texture[] textures) 
         {
-            Use();
             uint[] indices =
             {
                 //right hand rule, thumb = normal.
@@ -59,8 +66,10 @@ namespace Voxel_Engine.Rendering
                    0.5f, -0.5f, -0.5f,
             };
 
-            EBO = new(indices,
+            EBO = new(new(),indices,
                 new VertexBufferObject(BufferUsageHint.StaticDraw,0,3,vertices));
+
+            RenderObject = new(EBO, textures, new("Base", "Base"), output);
         }
     }
 }

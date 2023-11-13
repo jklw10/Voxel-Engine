@@ -13,7 +13,7 @@ namespace Voxel_Engine.Rendering
     {
         public static void UseCube()
         {
-            CubeRenderer.Instance.Use();
+            (CubeRenderer.Instance as IRenderable).Use();
         }
     }
 }
