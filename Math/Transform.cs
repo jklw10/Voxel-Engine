@@ -22,7 +22,7 @@ namespace Voxel_Engine
         public Vector3 Scale;
 
 
-        public Transform(Vector3 position, Quaternion? rotation = null, Vector3? scale = null)
+        public Transform(Vector3 position, Quaternion? rotation = null, Vector3? scale = null, Action? onUpdate = null)
         {
             Position = position;
             Rotation = rotation ?? Quaternion.Identity;
@@ -34,6 +34,24 @@ namespace Voxel_Engine
             new(Position + (other.Position - Position) * (float)t,
                 Rotation + (other.Rotation - Rotation) * (float)t,
                 Scale + (other.Scale - Scale) * (float)t);
+        }
+
+        /// <summary>
+        /// x,y,tilt
+        /// </summary>
+        /// <param name="dir"></param>
+        public void Rotate(Vector3 dir)
+        {
+            if (dir.LengthSquared == 0) return;
+
+            float MouseSensitivity = 0.2f;
+            Quaternion pitch = Quaternion.FromAxisAngle(
+                -Vector3.UnitZ, MathHelper.DegreesToRadians(dir.Y * MouseSensitivity));
+            Quaternion yaw = Quaternion.FromAxisAngle(
+                -Vector3.UnitY, MathHelper.DegreesToRadians(dir.X * MouseSensitivity));
+            
+            Rotation = yaw * Rotation * pitch;
+            
         }
     }
 }

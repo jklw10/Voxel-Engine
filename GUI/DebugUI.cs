@@ -70,12 +70,12 @@ namespace Voxel_Engine.GUI
             if (UITools.ToggleButton("FPS cap", ref fpsCap))
             {
 
-                Engine.Window.RenderFrequency = 0;
+                Engine.Window.UpdateFrequency = 0;
                 Engine.Window.VSync = VSyncMode.Off;
             }
             else
             {
-                Engine.Window.RenderFrequency = 144;
+                Engine.Window.UpdateFrequency = 144;
                 Engine.Window.VSync = VSyncMode.Adaptive;
 
             }

@@ -11,14 +11,14 @@ public enum TextureType
 public struct Texture
 {
     public TextureType Type;
-    public ProgramLocation Target;
+    public string Target;
     public int handle;
 
 
-    public Texture(TextureType type, ProgramLocation? target = null, Vector2i? size = null)
+    public Texture(TextureType type, string? target = null, Vector2i? size = null)
     {
         Type = type;
-        Target = target ?? ProgramLocation.Null;
+        Target = target ?? "";
         handle = CreateTexture(type, size ?? Engine.Window.Size);
     }
     public static void BindTexture(int handle, TextureType type, Vector2i size)

@@ -1,4 +1,5 @@
-﻿using static Voxel_Engine.Rendering.IGLType;
+﻿using System.Reflection.Metadata;
+using static Voxel_Engine.Rendering.IGLType;
 
 namespace Voxel_Engine.Rendering;
 public readonly struct Program
@@ -42,7 +43,7 @@ public readonly struct Program
 
     public void SetUniform(Uniform assignment)
     {
-        int loc = ProgramLocationContainer.GetLocation(this, assignment.location);
+        int loc = ProgramLocationContainer.GetLocation(this, assignment);
         switch (assignment.value)
         {
             case Int1(var val):     GL.ProgramUniform1(Handle, loc, val); break;
@@ -73,14 +74,14 @@ public interface IGLType
 }
 public static class ProgramLocationContainer
 {
-    static Dictionary<(Program, ProgramLocation), int> storedLocations = new();
-    public static int GetLocation(this Program p, ProgramLocation loc)
+    static Dictionary<(Program, Uniform), int> storedLocations = new();
+    public static int GetLocation(this Program p, Uniform loc)
     {
         if (storedLocations.TryGetValue((p,loc), out int val))
         {
             return val;
         }
-        int i_loc = GL.GetUniformLocation(p.Handle, loc.name);
+        int i_loc = GL.GetUniformLocation(p.Handle, loc.location);
         if (i_loc >= 0)
         {
             storedLocations.Add((p, loc), i_loc);
@@ -89,38 +90,23 @@ public static class ProgramLocationContainer
         return i_loc;
     }
 }
-public struct ProgramLocation
-{
 
-    public static readonly ProgramLocation Null = new("");
-    public static readonly ProgramLocation ProjectionMatrix = new("ProjMatrix");
-    public static readonly ProgramLocation CameraPosition = new("ViewPos");
-    public static readonly ProgramLocation CameraRotation = new("CamRot");
-    public static readonly ProgramLocation ViewMatrix = new("ViewMatrix");
-    public static readonly ProgramLocation Resolution = new("Resolution");
-
-    public string name;
-
-    public ProgramLocation(string name)
-    {
-        this.name = name;
-    }
-}
 public struct Uniform
 {
-    public ProgramLocation location;
+    public string location;
     public IGLType value;
-    public static Uniform ProjectionMatrix(Float4x4 value) => new(ProgramLocation.ProjectionMatrix, value);
-    public static Uniform ViewMatrix(Float4x4 value) => new(ProgramLocation.ViewMatrix, value);
-    public static Uniform CameraPosition(Float3 value) => new(ProgramLocation.CameraPosition, value);
-    public static Uniform CameraRotation(Float4 value) => new(ProgramLocation.CameraRotation, value);
-    public static Uniform Resolution(Float2 value) => new(ProgramLocation.Resolution, value);
-    public static Uniform TextureTarget(ProgramLocation location, Int1 value) => new(location, value);
+    public static Uniform ProjectionMatrix(Float4x4 value) => new("ProjMatrix", value);
+    public static Uniform ViewMatrix(Float4x4 value) => new ("ViewMatrix", value);
+    public static Uniform CameraPosition(Float3 value) =>  new ("ViewPos", value); 
+    public static Uniform CameraRotation(Float4 value) => new("CamRot", value);
+    public static Uniform Resolution(Float2 value) => new("Resolution", value);
+    //public static Uniform TextureTarget(string location, Int1 value) => new(location, value);
 
-    public Uniform(ProgramLocation loc, IGLType value)
+    public Uniform(string loc, IGLType value)
     {
         this.location = loc;
         this.value = value;
     }
+    
 }
 

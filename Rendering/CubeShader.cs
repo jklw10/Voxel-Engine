@@ -21,14 +21,14 @@ namespace Voxel_Engine.Rendering
                 return instancebacking;
             }
         }
-
-        public RenderObject GetRenderable() => RenderObject;
-        public readonly RenderObject RenderObject;
+        public int instanceCount = 0;
+        public Renderer GetRenderable() => Renderable;
+        public readonly Renderer Renderable;
         public readonly ElementBufferObject EBO;
         public void Render()
         {
-            RenderObject.Use();
-            GL.DrawElements(PrimitiveType.Triangles,EBO.IBO.DataCount,DrawElementsType.UnsignedInt,0);
+            Renderable.Use();
+            GL.DrawArraysInstanced(PrimitiveType.Triangles,0, EBO.IBO.DataCount, instanceCount);
         }
         public CubeRenderer(FrameBuffer? output = null, params Texture[] textures) 
         {
@@ -66,10 +66,10 @@ namespace Voxel_Engine.Rendering
                    0.5f, -0.5f, -0.5f,
             };
 
-            EBO = new(new(),indices,
+            EBO = new(indices,
                 new VertexBufferObject(BufferUsageHint.StaticDraw,0,3,vertices));
 
-            RenderObject = new(EBO, textures, new("Base", "Base"), output);
+            Renderable = new(EBO, new("Base", "Base"), textures,  output);
         }
     }
 }

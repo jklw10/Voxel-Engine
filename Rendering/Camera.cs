@@ -7,12 +7,12 @@ public class Camera
 {
     static Camera? main;
 
-    
+
 
     /// <summary>
     /// finds a main camera if one has been selected, or creates a new empty one if not.
     /// </summary>
-    public static Camera Main 
+    public static Camera Main
     {
         get
         {
@@ -23,7 +23,7 @@ public class Camera
         private set
         {
             main = value;
-        } 
+        }
     }
     /// <summary>
     /// selects a camera that can be found via Camera.Main
@@ -122,21 +122,5 @@ public class Camera
         passes.SetUniform(Uniform.ProjectionMatrix(new(ProjectionMatrix)));
     }
    
-    /// <summary>
-    /// x,y,tilt
-    /// </summary>
-    /// <param name="dir"></param>
-    public void Rotate(Vector3 dir)
-    {
-        if (dir.LengthSquared == 0 || Main is null) return;
-
-        float MouseSensitivity = 0.2f;
-        Quaternion pitch = Quaternion.FromAxisAngle(
-            -Vector3.UnitZ, MathHelper.DegreesToRadians(dir.Y * MouseSensitivity));
-        Quaternion yaw = Quaternion.FromAxisAngle(
-            -Vector3.UnitY, MathHelper.DegreesToRadians(dir.X * MouseSensitivity));
-        Transform next = Transform;
-        next.Rotation = yaw * Transform.Rotation *  pitch ;
-        Transform = next;
-    }
+    
 }

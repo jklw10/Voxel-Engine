@@ -41,10 +41,10 @@ public class Engine
                     break;
             }
         }
-        Window.UpdateFrame += OnUpdate;
-        Window.RenderFrame += OnRender;
         Window.Load += OnLoad;
         Window.Resize += OnResize;
+        Window.UpdateFrame += OnUpdate;
+        Window.RenderFrame += OnRender;
 
         Window.Run();
         Window.Dispose();
@@ -52,7 +52,8 @@ public class Engine
 
     static void OnResize(ResizeEventArgs e)
     {
-        Window.Size = e.Size;
+        Console.WriteLine($"x:{e.Width} y:{e.Height} ");
+        //Window.Size = e.Size;
         Camera.Main?.FitToScreen();
         UI.OnResize(e);
         GL.Viewport(0, 0, e.Width, e.Height);

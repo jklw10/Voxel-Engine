@@ -13,8 +13,7 @@ namespace Voxel_Engine.DataHandling
         public readonly BufferUsageHint Hint;
         public readonly int TypeSize;
         public int DataCount { get; private set; }
-        public BufferObject(BufferTarget target, BufferUsageHint hint, 
-            T[]? data = null)
+        public BufferObject(BufferTarget target, BufferUsageHint hint, T[]? data = null)
         {
             DataCount = 0;
             unsafe { TypeSize = sizeof(T); }

@@ -23,19 +23,18 @@ public class RenderPassStack
 }
 public class ShaderPass : IRenderable
 {
-    static VertexArrayObject VAO = new();
-    public RenderObject backing;
-    public RenderObject GetRenderable() => backing;
+    public Renderer backing;
+    public Renderer GetRenderable() => backing;
     public void Render()
     {
         backing.Use();
-        GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+        //GL.DrawArrays(PrimitiveType.Triangles,0,3);
+        GL.DrawElements(PrimitiveType.Triangles,3,DrawElementsType.UnsignedInt,(IntPtr)0);
     }
     public ShaderPass(string shaderName, Texture[]? input = null, FrameBuffer? output = null)
     {
-        backing = new(new(VAO), input, new("Pass", shaderName), output);
+        ElementBufferObject ebo = new(new uint[] { 0, 1, 2 });
+        backing = new(ebo, new("Pass", shaderName), input, output);
     }
-    public void Use() =>
-        backing.Use();
 }
 

@@ -1,18 +1,24 @@
 ﻿namespace Voxel_Engine.Rendering;
 public readonly struct ElementBufferObject
 {
-    public readonly VertexArrayObject VAO;
     public readonly BufferObject<uint> IBO;
     public readonly VertexBufferObject[] VBO;
-    public void Use() => VAO.Use();
-    public ElementBufferObject(VertexArrayObject vao,uint[]? indices = null, params VertexBufferObject[] VBO)
+    public readonly int VAO;
+    public void Use()
     {
-        VAO = vao;
-        VAO.Use();
+        GL.BindVertexArray(VAO);
+    }
+    public ElementBufferObject()
+    {
+        this = new(null);
+    }
+    public ElementBufferObject( uint[]? indices = null, params VertexBufferObject[] VBO)
+    {
+        VAO = GL.GenVertexArray();
+        GL.BindVertexArray(VAO);
         Array.ForEach(VBO, x => x.Enable());
         indices ??= Array.Empty<uint>();
 
-        //magic numbers for cube vertices (xyz)
         IBO = new(BufferTarget.ElementArrayBuffer, BufferUsageHint.StaticDraw, indices);
         this.VBO = VBO;
     }
@@ -31,10 +37,5 @@ public readonly struct ElementBufferObject
         }
     }
 }
-public readonly struct VertexArrayObject
-{
-    public readonly int Handle = GL.GenVertexArray();
-    public void Use() => GL.BindVertexArray(Handle);
-    public VertexArrayObject() => Use();
-}
+
 
